@@ -1,0 +1,485 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Global Hardened Primitives ---
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function normalizedEmail() {
+      return request.auth.token.email is string ? request.auth.token.email.lower() : '';
+    }
+
+    function isValidEmailList(listVal) {
+      return listVal is list &&
+        listVal.size() <= 5 &&
+        (listVal.size() == 0 || (
+          listVal[0] is string && listVal[0].size() >= 3 && listVal[0].size() <= 120
+        ));
+    }
+
+    function isWorkspaceOwner(ownerId) {
+      return ownerId == request.auth.uid;
+    }
+
+    function isWorkspaceAssistant(ownerId) {
+      return normalizedEmail().size() >= 3 &&
+        exists(/databases/$(database)/documents/workspaces/$(ownerId)) &&
+        normalizedEmail() in get(/databases/$(database)/documents/workspaces/$(ownerId)).data.assistantEmails;
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+        'ownerId', 'displayName', 'activePhase', 'seededDefaultData', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'ownerId', 'displayName', 'activePhase', 'seededDefaultData', 'createdAt', 'updatedAt'
+      ]) &&
+      data.ownerId is string &&
+      data.ownerId == request.auth.uid &&
+      data.ownerId == userId &&
+      data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+      data.activePhase in ['phase-1', 'phase-2', 'phase-3'] &&
+      data.seededDefaultData is bool &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidWorkspace(data, workspaceId) {
+      return data.keys().hasAll([
+        'ownerId', 'ownerEmail', 'ownerName', 'activePhase', 'assistantEmails', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'ownerId', 'ownerEmail', 'ownerName', 'activePhase', 'assistantEmails', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.ownerId) &&
+      data.ownerId == workspaceId &&
+      data.ownerEmail is string && data.ownerEmail.size() >= 3 && data.ownerEmail.size() <= 120 &&
+      data.ownerName is string && data.ownerName.size() >= 1 && data.ownerName.size() <= 100 &&
+      data.activePhase in ['phase-1', 'phase-2', 'phase-3'] &&
+      isValidEmailList(data.assistantEmails) &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidWorkspaceMember(data, workspaceId) {
+      return data.keys().hasAll([
+        'workspaceId', 'ownerId', 'email', 'displayName', 'role', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'workspaceId', 'ownerId', 'email', 'displayName', 'role', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.workspaceId) &&
+      data.workspaceId == workspaceId &&
+      isValidId(data.ownerId) &&
+      data.ownerId == workspaceId &&
+      data.email is string && data.email.size() >= 3 && data.email.size() <= 120 &&
+      data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+      data.role in ['assistant'] &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidContentItem(data) {
+      return data.keys().hasAll([
+        'ownerId', 'sharedEmails', 'lastEditedBy', 'title', 'pillar', 'targetAccount', 'format', 'stage',
+        'researchSource', 'audienceTier', 'viralTrigger', 'researchInsight',
+        'hook3s', 'body30s', 'cta15s', 'carouselOutline', 'seoCaption', 'hashtags',
+        'driveAssetUrl', 'scheduledDate', 'publishedUrl', 'igPublishStatus',
+        'tiktokPublishStatus', 'sourcePortfolioRef',
+        'views', 'reach', 'nonFollowerPct', 'holdRate3s', 'avgWatchPct',
+        'shares', 'saves', 'comments', 'profileVisits', 'newFollows',
+        'inboundLeads', 'creatorMinutes', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'ownerId', 'sharedEmails', 'lastEditedBy', 'title', 'pillar', 'targetAccount', 'format', 'stage',
+        'researchSource', 'audienceTier', 'viralTrigger', 'researchInsight',
+        'hook3s', 'body30s', 'cta15s', 'carouselOutline', 'seoCaption', 'hashtags',
+        'driveAssetUrl', 'scheduledDate', 'publishedUrl', 'igPublishStatus',
+        'tiktokPublishStatus', 'sourcePortfolioRef',
+        'views', 'reach', 'nonFollowerPct', 'holdRate3s', 'avgWatchPct',
+        'shares', 'saves', 'comments', 'profileVisits', 'newFollows',
+        'inboundLeads', 'creatorMinutes', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.ownerId) &&
+      isValidEmailList(data.sharedEmails) &&
+      data.lastEditedBy is string && data.lastEditedBy.size() <= 120 &&
+      data.title is string && data.title.size() >= 2 && data.title.size() <= 160 &&
+      data.pillar in ['pilar-1', 'pilar-2', 'pilar-3', 'pilar-4'] &&
+      data.targetAccount in [
+        '@lalumahendra',
+        '@obeecreatives',
+        '@obeephotography',
+        'Collab @lalumahendra x @obeephotography',
+        'Collab @lalumahendra x @obeecreatives'
+      ] &&
+      data.format in ['Reels', 'Carousel', 'TikTok', 'IG Story', 'Collab Reels'] &&
+      data.stage in ['research', 'script', 'batching', 'editing', 'ready', 'published'] &&
+      data.researchSource is string && data.researchSource.size() <= 240 &&
+      data.audienceTier in ['lapis-1', 'lapis-2', 'lapis-3'] &&
+      data.viralTrigger in ['DM Shares', 'Watch Time', 'Saves', 'Discussion'] &&
+      data.researchInsight is string && data.researchInsight.size() <= 1000 &&
+      data.hook3s is string && data.hook3s.size() <= 400 &&
+      data.body30s is string && data.body30s.size() <= 3000 &&
+      data.cta15s is string && data.cta15s.size() <= 600 &&
+      data.carouselOutline is string && data.carouselOutline.size() <= 2500 &&
+      data.seoCaption is string && data.seoCaption.size() <= 2200 &&
+      data.hashtags is string && data.hashtags.size() <= 200 &&
+      data.driveAssetUrl is string && data.driveAssetUrl.size() <= 500 &&
+      data.scheduledDate is string && data.scheduledDate.size() <= 30 &&
+      data.publishedUrl is string && data.publishedUrl.size() <= 500 &&
+      data.igPublishStatus in ['manual', 'queued', 'draft', 'published'] &&
+      data.tiktokPublishStatus in ['manual', 'queued', 'draft', 'published'] &&
+      data.sourcePortfolioRef is string && data.sourcePortfolioRef.size() <= 120 &&
+      (data.views is int || data.views is float) && data.views >= 0 &&
+      (data.reach is int || data.reach is float) && data.reach >= 0 &&
+      (data.nonFollowerPct is int || data.nonFollowerPct is float) && data.nonFollowerPct >= 0 && data.nonFollowerPct <= 100 &&
+      (data.holdRate3s is int || data.holdRate3s is float) && data.holdRate3s >= 0 && data.holdRate3s <= 100 &&
+      (data.avgWatchPct is int || data.avgWatchPct is float) && data.avgWatchPct >= 0 && data.avgWatchPct <= 200 &&
+      (data.shares is int || data.shares is float) && data.shares >= 0 &&
+      (data.saves is int || data.saves is float) && data.saves >= 0 &&
+      (data.comments is int || data.comments is float) && data.comments >= 0 &&
+      (data.profileVisits is int || data.profileVisits is float) && data.profileVisits >= 0 &&
+      (data.newFollows is int || data.newFollows is float) && data.newFollows >= 0 &&
+      (data.inboundLeads is int || data.inboundLeads is float) && data.inboundLeads >= 0 &&
+      (data.creatorMinutes is int || data.creatorMinutes is float) && data.creatorMinutes >= 0 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidWeeklySnapshot(data) {
+      return data.keys().hasAll([
+        'ownerId', 'sharedEmails', 'lastEditedBy', 'weekLabel', 'phase', 'startDate', 'endDate',
+        'publishedCount', 'totalViews', 'totalReach', 'avgNonFollowerPct',
+        'avgHoldRate3s', 'avgWatchPct', 'totalShares', 'totalSaves',
+        'qualityCommentPct', 'profileVisits', 'newFollows', 'inboundLeads',
+        'ctaKeywordComments', 'creatorHours', 'notes', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'ownerId', 'sharedEmails', 'lastEditedBy', 'weekLabel', 'phase', 'startDate', 'endDate',
+        'publishedCount', 'totalViews', 'totalReach', 'avgNonFollowerPct',
+        'avgHoldRate3s', 'avgWatchPct', 'totalShares', 'totalSaves',
+        'qualityCommentPct', 'profileVisits', 'newFollows', 'inboundLeads',
+        'ctaKeywordComments', 'creatorHours', 'notes', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.ownerId) &&
+      isValidEmailList(data.sharedEmails) &&
+      data.lastEditedBy is string && data.lastEditedBy.size() <= 120 &&
+      data.weekLabel is string && data.weekLabel.size() >= 2 && data.weekLabel.size() <= 60 &&
+      data.phase in ['phase-1', 'phase-2', 'phase-3'] &&
+      data.startDate is string && data.startDate.size() <= 20 &&
+      data.endDate is string && data.endDate.size() <= 20 &&
+      (data.publishedCount is int || data.publishedCount is float) && data.publishedCount >= 0 &&
+      (data.totalViews is int || data.totalViews is float) && data.totalViews >= 0 &&
+      (data.totalReach is int || data.totalReach is float) && data.totalReach >= 0 &&
+      (data.avgNonFollowerPct is int || data.avgNonFollowerPct is float) && data.avgNonFollowerPct >= 0 && data.avgNonFollowerPct <= 100 &&
+      (data.avgHoldRate3s is int || data.avgHoldRate3s is float) && data.avgHoldRate3s >= 0 && data.avgHoldRate3s <= 100 &&
+      (data.avgWatchPct is int || data.avgWatchPct is float) && data.avgWatchPct >= 0 && data.avgWatchPct <= 200 &&
+      (data.totalShares is int || data.totalShares is float) && data.totalShares >= 0 &&
+      (data.totalSaves is int || data.totalSaves is float) && data.totalSaves >= 0 &&
+      (data.qualityCommentPct is int || data.qualityCommentPct is float) && data.qualityCommentPct >= 0 && data.qualityCommentPct <= 100 &&
+      (data.profileVisits is int || data.profileVisits is float) && data.profileVisits >= 0 &&
+      (data.newFollows is int || data.newFollows is float) && data.newFollows >= 0 &&
+      (data.inboundLeads is int || data.inboundLeads is float) && data.inboundLeads >= 0 &&
+      (data.ctaKeywordComments is int || data.ctaKeywordComments is float) && data.ctaKeywordComments >= 0 &&
+      (data.creatorHours is int || data.creatorHours is float) && data.creatorHours >= 0 &&
+      data.notes is string && data.notes.size() <= 1000 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidPortfolioAsset(data) {
+      return data.keys().hasAll([
+        'ownerId', 'sharedEmails', 'lastEditedBy', 'title', 'sourceAccount', 'category', 'imagePath',
+        'craftAngle', 'recycledToReels', 'linkedContentId', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'ownerId', 'sharedEmails', 'lastEditedBy', 'title', 'sourceAccount', 'category', 'imagePath',
+        'craftAngle', 'recycledToReels', 'linkedContentId', 'createdAt', 'updatedAt'
+      ]) &&
+      isValidId(data.ownerId) &&
+      isValidEmailList(data.sharedEmails) &&
+      data.lastEditedBy is string && data.lastEditedBy.size() <= 120 &&
+      data.title is string && data.title.size() >= 2 && data.title.size() <= 120 &&
+      data.sourceAccount in ['@obeephotography', '@obeecreatives'] &&
+      data.category is string && data.category.size() <= 60 &&
+      data.imagePath is string && data.imagePath.size() <= 300 &&
+      data.craftAngle is string && data.craftAngle.size() <= 500 &&
+      data.recycledToReels is bool &&
+      data.linkedContentId is string && data.linkedContentId.size() <= 128 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    // --- Collection Rules ---
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() &&
+        isValidId(userId) &&
+        request.auth.uid == userId &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isSignedIn() &&
+        isValidId(userId) &&
+        request.auth.uid == userId &&
+        existing().ownerId == request.auth.uid &&
+        isValidUserProfile(incoming(), userId) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'activePhase', 'seededDefaultData', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    match /workspaces/{workspaceId} {
+      allow get: if isSignedIn() && isValidId(workspaceId) && (
+        existing().ownerId == request.auth.uid ||
+        normalizedEmail() in existing().assistantEmails
+      );
+      allow list: if isSignedIn() && (
+        resource.data.ownerId == request.auth.uid ||
+        normalizedEmail() in resource.data.assistantEmails
+      );
+      allow create: if isSignedIn() &&
+        isValidId(workspaceId) &&
+        workspaceId == request.auth.uid &&
+        isValidWorkspace(incoming(), workspaceId) &&
+        incoming().ownerId == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isSignedIn() &&
+        isValidId(workspaceId) &&
+        existing().ownerId == request.auth.uid &&
+        isValidWorkspace(incoming(), workspaceId) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().ownerEmail == existing().ownerEmail &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'ownerName', 'activePhase', 'assistantEmails', 'updatedAt'
+        ]);
+      allow delete: if false;
+
+      match /members/{memberId} {
+        allow get: if isSignedIn() && isValidId(workspaceId) && isValidId(memberId) && (
+          existing().ownerId == request.auth.uid ||
+          existing().email == normalizedEmail()
+        );
+        allow list: if isSignedIn() && (
+          resource.data.ownerId == request.auth.uid ||
+          resource.data.email == normalizedEmail()
+        );
+        allow create: if isSignedIn() &&
+          isValidId(workspaceId) &&
+          isValidId(memberId) &&
+          workspaceId == request.auth.uid &&
+          isValidWorkspaceMember(incoming(), workspaceId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerId == request.auth.uid;
+        allow update: if isSignedIn() &&
+          isValidId(workspaceId) &&
+          isValidId(memberId) &&
+          existing().ownerId == request.auth.uid &&
+          isValidWorkspaceMember(incoming(), workspaceId) &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().workspaceId == existing().workspaceId &&
+          incoming().email == existing().email &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'role', 'updatedAt']) &&
+          get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerId == request.auth.uid;
+        allow delete: if isSignedIn() &&
+          isValidId(workspaceId) &&
+          isValidId(memberId) &&
+          existing().ownerId == request.auth.uid &&
+          get(/databases/$(database)/documents/workspaces/$(workspaceId)).data.ownerId == request.auth.uid;
+      }
+    }
+
+    match /contentItems/{itemId} {
+      allow get: if isSignedIn() && isValidId(itemId) && (
+        existing().ownerId == request.auth.uid ||
+        (normalizedEmail() in existing().sharedEmails && isWorkspaceAssistant(existing().ownerId))
+      );
+      allow list: if isSignedIn() && (
+        resource.data.ownerId == request.auth.uid ||
+        normalizedEmail() in resource.data.sharedEmails
+      );
+      allow create: if isSignedIn() &&
+        isValidId(itemId) &&
+        isValidContentItem(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time && (
+          isWorkspaceOwner(incoming().ownerId) ||
+          (isWorkspaceAssistant(incoming().ownerId) &&
+            incoming().sharedEmails == get(/databases/$(database)/documents/workspaces/$(incoming().ownerId)).data.assistantEmails)
+        );
+      allow update: if isSignedIn() &&
+        isValidId(itemId) &&
+        isValidContentItem(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          // Tier 1: Workspace Owner (Full edit + sharedEmails sync)
+          (isWorkspaceOwner(existing().ownerId) && (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'stage', 'scheduledDate', 'publishedUrl', 'igPublishStatus', 'tiktokPublishStatus', 'sharedEmails', 'lastEditedBy', 'updatedAt'
+            ]) ||
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'views', 'reach', 'nonFollowerPct', 'holdRate3s', 'avgWatchPct',
+              'shares', 'saves', 'comments', 'profileVisits', 'newFollows',
+              'inboundLeads', 'creatorMinutes', 'sharedEmails', 'lastEditedBy', 'updatedAt'
+            ]) ||
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'sharedEmails', 'lastEditedBy', 'updatedAt'
+            ]) ||
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'sharedEmails', 'lastEditedBy', 'title', 'pillar', 'targetAccount', 'format', 'stage',
+              'researchSource', 'audienceTier', 'viralTrigger', 'researchInsight',
+              'hook3s', 'body30s', 'cta15s', 'carouselOutline', 'seoCaption', 'hashtags',
+              'driveAssetUrl', 'scheduledDate', 'publishedUrl', 'igPublishStatus',
+              'tiktokPublishStatus', 'sourcePortfolioRef',
+              'views', 'reach', 'nonFollowerPct', 'holdRate3s', 'avgWatchPct',
+              'shares', 'saves', 'comments', 'profileVisits', 'newFollows',
+              'inboundLeads', 'creatorMinutes', 'updatedAt'
+            ])
+          )) ||
+          // Tier 2: Authorized Assistant (Operational edits only; cannot change sharedEmails)
+          (isWorkspaceAssistant(existing().ownerId) &&
+            normalizedEmail() in existing().sharedEmails &&
+            incoming().sharedEmails == existing().sharedEmails && (
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'stage', 'scheduledDate', 'publishedUrl', 'igPublishStatus', 'tiktokPublishStatus', 'lastEditedBy', 'updatedAt'
+              ]) ||
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'views', 'reach', 'nonFollowerPct', 'holdRate3s', 'avgWatchPct',
+                'shares', 'saves', 'comments', 'profileVisits', 'newFollows',
+                'inboundLeads', 'creatorMinutes', 'lastEditedBy', 'updatedAt'
+              ]) ||
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'lastEditedBy', 'title', 'pillar', 'targetAccount', 'format', 'stage',
+                'researchSource', 'audienceTier', 'viralTrigger', 'researchInsight',
+                'hook3s', 'body30s', 'cta15s', 'carouselOutline', 'seoCaption', 'hashtags',
+                'driveAssetUrl', 'scheduledDate', 'publishedUrl', 'igPublishStatus',
+                'tiktokPublishStatus', 'sourcePortfolioRef',
+                'views', 'reach', 'nonFollowerPct', 'holdRate3s', 'avgWatchPct',
+                'shares', 'saves', 'comments', 'profileVisits', 'newFollows',
+                'inboundLeads', 'creatorMinutes', 'updatedAt'
+              ])
+            )
+          )
+        );
+      allow delete: if isSignedIn() && isValidId(itemId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /weeklySnapshots/{snapshotId} {
+      allow get: if isSignedIn() && isValidId(snapshotId) && (
+        existing().ownerId == request.auth.uid ||
+        (normalizedEmail() in existing().sharedEmails && isWorkspaceAssistant(existing().ownerId))
+      );
+      allow list: if isSignedIn() && (
+        resource.data.ownerId == request.auth.uid ||
+        normalizedEmail() in resource.data.sharedEmails
+      );
+      allow create: if isSignedIn() &&
+        isValidId(snapshotId) &&
+        isValidWeeklySnapshot(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time && (
+          isWorkspaceOwner(incoming().ownerId) ||
+          (isWorkspaceAssistant(incoming().ownerId) &&
+            incoming().sharedEmails == get(/databases/$(database)/documents/workspaces/$(incoming().ownerId)).data.assistantEmails)
+        );
+      allow update: if isSignedIn() &&
+        isValidId(snapshotId) &&
+        isValidWeeklySnapshot(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          (isWorkspaceOwner(existing().ownerId) && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['sharedEmails', 'lastEditedBy', 'updatedAt']) ||
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'sharedEmails', 'lastEditedBy', 'weekLabel', 'phase', 'startDate', 'endDate',
+              'publishedCount', 'totalViews', 'totalReach', 'avgNonFollowerPct',
+              'avgHoldRate3s', 'avgWatchPct', 'totalShares', 'totalSaves',
+              'qualityCommentPct', 'profileVisits', 'newFollows', 'inboundLeads',
+              'ctaKeywordComments', 'creatorHours', 'notes', 'updatedAt'
+            ])
+          )) ||
+          (isWorkspaceAssistant(existing().ownerId) &&
+            normalizedEmail() in existing().sharedEmails &&
+            incoming().sharedEmails == existing().sharedEmails &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'lastEditedBy', 'weekLabel', 'phase', 'startDate', 'endDate',
+              'publishedCount', 'totalViews', 'totalReach', 'avgNonFollowerPct',
+              'avgHoldRate3s', 'avgWatchPct', 'totalShares', 'totalSaves',
+              'qualityCommentPct', 'profileVisits', 'newFollows', 'inboundLeads',
+              'ctaKeywordComments', 'creatorHours', 'notes', 'updatedAt'
+            ]))
+        );
+      allow delete: if isSignedIn() && isValidId(snapshotId) && existing().ownerId == request.auth.uid;
+    }
+
+    match /portfolioAssets/{assetId} {
+      allow get: if isSignedIn() && isValidId(assetId) && (
+        existing().ownerId == request.auth.uid ||
+        (normalizedEmail() in existing().sharedEmails && isWorkspaceAssistant(existing().ownerId))
+      );
+      allow list: if isSignedIn() && (
+        resource.data.ownerId == request.auth.uid ||
+        normalizedEmail() in resource.data.sharedEmails
+      );
+      allow create: if isSignedIn() &&
+        isValidId(assetId) &&
+        isValidPortfolioAsset(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time && (
+          isWorkspaceOwner(incoming().ownerId) ||
+          (isWorkspaceAssistant(incoming().ownerId) &&
+            incoming().sharedEmails == get(/databases/$(database)/documents/workspaces/$(incoming().ownerId)).data.assistantEmails)
+        );
+      allow update: if isSignedIn() &&
+        isValidId(assetId) &&
+        isValidPortfolioAsset(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          (isWorkspaceOwner(existing().ownerId) && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['sharedEmails', 'lastEditedBy', 'updatedAt']) ||
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'sharedEmails', 'lastEditedBy', 'title', 'sourceAccount', 'category', 'imagePath',
+              'craftAngle', 'recycledToReels', 'linkedContentId', 'updatedAt'
+            ])
+          )) ||
+          (isWorkspaceAssistant(existing().ownerId) &&
+            normalizedEmail() in existing().sharedEmails &&
+            incoming().sharedEmails == existing().sharedEmails &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'lastEditedBy', 'title', 'sourceAccount', 'category', 'imagePath',
+              'craftAngle', 'recycledToReels', 'linkedContentId', 'updatedAt'
+            ]))
+        );
+      allow delete: if isSignedIn() && isValidId(assetId) && existing().ownerId == request.auth.uid;
+    }
+  }
+}
