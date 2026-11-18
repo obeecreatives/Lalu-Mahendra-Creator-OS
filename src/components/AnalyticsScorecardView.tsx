@@ -151,77 +151,169 @@ export function AnalyticsScorecardView({
         </div>
 
         {published.length === 0 ? (
-          <div className="p-8 bg-white border border-stone-200 text-center text-sm text-stone-600">
+          <div className="p-6 sm:p-8 bg-white border border-stone-200 text-center text-sm text-stone-600">
             Belum ada konten di tahap <strong>6. Tayang &amp; Analisis</strong>. Pindahkan
             konten yang sudah tayang di Kanban untuk melacak performanya di sini.
           </div>
         ) : (
-          <div className="overflow-x-auto bg-white border border-stone-200">
-            <table className="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-stone-200 bg-[#F4F0E8] text-xs uppercase tracking-wider text-stone-600">
-                  <th className="py-3 px-4 font-semibold">Konten &amp; Pilar</th>
-                  <th className="py-3 px-3 font-semibold text-right">Views</th>
-                  <th className="py-3 px-3 font-semibold text-right">Non-Foll</th>
-                  <th className="py-3 px-3 font-semibold text-right">3s Hold</th>
-                  <th className="py-3 px-3 font-semibold text-right">Share/1K</th>
-                  <th className="py-3 px-3 font-semibold text-right">Save/1K</th>
-                  <th className="py-3 px-3 font-semibold text-right">Foll Conv</th>
-                  <th className="py-3 px-4 font-semibold">Vonis Sistem</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-200">
-                {published.map((item) => {
-                  const ev = evaluatePostPerformance(item);
-                  return (
-                    <tr
-                      key={item.id}
-                      onClick={() => onOpenItem(item, 'metrics')}
-                      className="hover:bg-stone-50 cursor-pointer transition-colors"
+          <>
+            {/* Mobile Cards (< md) */}
+            <div className="md:hidden space-y-3">
+              {published.map((item) => {
+                const ev = evaluatePostPerformance(item);
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => onOpenItem(item, 'metrics')}
+                    className="w-full text-left p-4 bg-white border border-stone-200 hover:bg-stone-50 transition-colors space-y-2.5 cursor-pointer block"
+                  >
+                    <div>
+                      <div className="text-sm font-semibold text-stone-900 leading-snug">
+                        {item.title}
+                      </div>
+                      <div className="text-xs text-stone-500 mt-0.5">
+                        {PILLAR_META[item.pillar].shortLabel} · {item.targetAccount}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 pt-2 border-t border-stone-100 font-mono tabular-nums text-xs">
+                      <div>
+                        <span className="block text-[10px] text-stone-500 uppercase">
+                          Views
+                        </span>
+                        <span className="font-semibold text-stone-900">
+                          {item.views.toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] text-stone-500 uppercase">
+                          3s Hold
+                        </span>
+                        <span className="font-semibold text-stone-900">
+                          {item.holdRate3s}%
+                        </span>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] text-stone-500 uppercase">
+                          Share/1K
+                        </span>
+                        <span className="font-semibold text-stone-900">
+                          {ev.shareRate1k.toFixed(1)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] text-stone-500 uppercase">
+                          Non-Foll
+                        </span>
+                        <span className="font-semibold text-stone-900">
+                          {item.nonFollowerPct}%
+                        </span>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] text-stone-500 uppercase">
+                          Save/1K
+                        </span>
+                        <span className="font-semibold text-stone-900">
+                          {ev.saveRate1k.toFixed(1)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] text-stone-500 uppercase">
+                          Foll Conv
+                        </span>
+                        <span className="font-semibold text-stone-900">
+                          {ev.followConvPct.toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`text-xs font-semibold pt-1 ${
+                        ev.tone === 'positive'
+                          ? 'text-green-800'
+                          : ev.tone === 'critical'
+                            ? 'text-red-700'
+                            : ev.tone === 'warning'
+                              ? 'text-amber-700'
+                              : 'text-stone-700'
+                      }`}
                     >
-                      <td className="py-3.5 px-4">
-                        <div className="font-semibold text-stone-900">{item.title}</div>
-                        <div className="text-xs text-stone-500">
-                          {PILLAR_META[item.pillar].shortLabel} · {item.targetAccount}
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-3 text-right font-mono tabular-nums">
-                        {item.views.toLocaleString('id-ID')}
-                      </td>
-                      <td className="py-3.5 px-3 text-right font-mono tabular-nums">
-                        {item.nonFollowerPct}%
-                      </td>
-                      <td className="py-3.5 px-3 text-right font-mono tabular-nums">
-                        {item.holdRate3s}%
-                      </td>
-                      <td className="py-3.5 px-3 text-right font-mono tabular-nums">
-                        {ev.shareRate1k.toFixed(1)}
-                      </td>
-                      <td className="py-3.5 px-3 text-right font-mono tabular-nums">
-                        {ev.saveRate1k.toFixed(1)}
-                      </td>
-                      <td className="py-3.5 px-3 text-right font-mono tabular-nums">
-                        {ev.followConvPct.toFixed(1)}%
-                      </td>
-                      <td
-                        className={`py-3.5 px-4 text-xs font-semibold ${
-                          ev.tone === 'positive'
-                            ? 'text-green-800'
-                            : ev.tone === 'critical'
-                              ? 'text-red-700'
-                              : ev.tone === 'warning'
-                                ? 'text-amber-700'
-                                : 'text-stone-700'
-                        }`}
+                      {ev.statusLabel}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Tablet & Desktop Table (md+) */}
+            <div className="hidden md:block overflow-x-auto bg-white border border-stone-200">
+              <table className="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-stone-200 bg-[#F4F0E8] text-xs uppercase tracking-wider text-stone-600">
+                    <th className="py-3 px-4 font-semibold">Konten &amp; Pilar</th>
+                    <th className="py-3 px-3 font-semibold text-right">Views</th>
+                    <th className="py-3 px-3 font-semibold text-right">Non-Foll</th>
+                    <th className="py-3 px-3 font-semibold text-right">3s Hold</th>
+                    <th className="py-3 px-3 font-semibold text-right">Share/1K</th>
+                    <th className="py-3 px-3 font-semibold text-right">Save/1K</th>
+                    <th className="py-3 px-3 font-semibold text-right">Foll Conv</th>
+                    <th className="py-3 px-4 font-semibold">Vonis Sistem</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-200">
+                  {published.map((item) => {
+                    const ev = evaluatePostPerformance(item);
+                    return (
+                      <tr
+                        key={item.id}
+                        onClick={() => onOpenItem(item, 'metrics')}
+                        className="hover:bg-stone-50 cursor-pointer transition-colors"
                       >
-                        {ev.statusLabel}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        <td className="py-3.5 px-4">
+                          <div className="font-semibold text-stone-900">{item.title}</div>
+                          <div className="text-xs text-stone-500">
+                            {PILLAR_META[item.pillar].shortLabel} · {item.targetAccount}
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-3 text-right font-mono tabular-nums">
+                          {item.views.toLocaleString('id-ID')}
+                        </td>
+                        <td className="py-3.5 px-3 text-right font-mono tabular-nums">
+                          {item.nonFollowerPct}%
+                        </td>
+                        <td className="py-3.5 px-3 text-right font-mono tabular-nums">
+                          {item.holdRate3s}%
+                        </td>
+                        <td className="py-3.5 px-3 text-right font-mono tabular-nums">
+                          {ev.shareRate1k.toFixed(1)}
+                        </td>
+                        <td className="py-3.5 px-3 text-right font-mono tabular-nums">
+                          {ev.saveRate1k.toFixed(1)}
+                        </td>
+                        <td className="py-3.5 px-3 text-right font-mono tabular-nums">
+                          {ev.followConvPct.toFixed(1)}%
+                        </td>
+                        <td
+                          className={`py-3.5 px-4 text-xs font-semibold ${
+                            ev.tone === 'positive'
+                              ? 'text-green-800'
+                              : ev.tone === 'critical'
+                                ? 'text-red-700'
+                                : ev.tone === 'warning'
+                                  ? 'text-amber-700'
+                                  : 'text-stone-700'
+                          }`}
+                        >
+                          {ev.statusLabel}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </section>
 
@@ -239,19 +331,19 @@ export function AnalyticsScorecardView({
 
         <form
           onSubmit={handleSubmitSnapshot}
-          className="p-6 bg-white border border-stone-200 space-y-6"
+          className="p-4 sm:p-6 bg-white border border-stone-200 space-y-6"
         >
           {/* Live Computed Ratios Banner */}
-          <div className="p-4 bg-[#F4F0E8] border border-stone-200 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+          <div className="p-4 bg-[#F4F0E8] border border-stone-200 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
             <div>
               <span className="text-stone-500 block mb-1">Share Rate / 1K Reach</span>
               <span
-                className={`font-mono tabular-nums text-lg font-semibold ${
+                className={`font-mono tabular-nums text-base sm:text-lg font-semibold ${
                   shareRate >= 10 ? 'text-green-800' : 'text-stone-900'
                 }`}
               >
                 {shareRate.toFixed(1)}{' '}
-                <span className="text-[11px] font-normal text-stone-500">
+                <span className="text-[11px] font-normal text-stone-500 block sm:inline">
                   (Target &gt;= 10)
                 </span>
               </span>
@@ -259,12 +351,12 @@ export function AnalyticsScorecardView({
             <div>
               <span className="text-stone-500 block mb-1">Save Rate / 1K Reach</span>
               <span
-                className={`font-mono tabular-nums text-lg font-semibold ${
+                className={`font-mono tabular-nums text-base sm:text-lg font-semibold ${
                   saveRate >= 15 ? 'text-green-800' : 'text-stone-900'
                 }`}
               >
                 {saveRate.toFixed(1)}{' '}
-                <span className="text-[11px] font-normal text-stone-500">
+                <span className="text-[11px] font-normal text-stone-500 block sm:inline">
                   (Target &gt;= 15)
                 </span>
               </span>
@@ -272,12 +364,12 @@ export function AnalyticsScorecardView({
             <div>
               <span className="text-stone-500 block mb-1">Profile-to-Follow %</span>
               <span
-                className={`font-mono tabular-nums text-lg font-semibold ${
+                className={`font-mono tabular-nums text-base sm:text-lg font-semibold ${
                   followConv >= 6 ? 'text-green-800' : 'text-stone-900'
                 }`}
               >
                 {followConv.toFixed(1)}%{' '}
-                <span className="text-[11px] font-normal text-stone-500">
+                <span className="text-[11px] font-normal text-stone-500 block sm:inline">
                   (Target &gt;= 6%)
                 </span>
               </span>
@@ -285,12 +377,14 @@ export function AnalyticsScorecardView({
             <div>
               <span className="text-stone-500 block mb-1">Efisiensi Waktu Anda</span>
               <span
-                className={`font-mono tabular-nums text-lg font-semibold ${
+                className={`font-mono tabular-nums text-base sm:text-lg font-semibold ${
                   minsPerContent <= 45 ? 'text-green-800' : 'text-amber-700'
                 }`}
               >
                 {minsPerContent.toFixed(0)} mnt/konten{' '}
-                <span className="text-[11px] font-normal text-stone-500">(&lt;= 45m)</span>
+                <span className="text-[11px] font-normal text-stone-500 block sm:inline">
+                  (&lt;= 45m)
+                </span>
               </span>
             </div>
           </div>
@@ -305,7 +399,7 @@ export function AnalyticsScorecardView({
                 required
                 value={weekLabel}
                 onChange={(e) => setWeekLabel(e.target.value)}
-                className="w-full px-3 py-2 border border-stone-300 text-sm focus:outline-none focus:border-[#1E3A8A]"
+                className="w-full px-3 py-2 border border-stone-300 text-base sm:text-sm focus:outline-none focus:border-[#1E3A8A]"
               />
             </div>
             <div>
@@ -315,7 +409,7 @@ export function AnalyticsScorecardView({
               <select
                 value={phase}
                 onChange={(e) => setPhase(e.target.value as StrategyPhase)}
-                className="w-full px-3 py-2 border border-stone-300 text-sm focus:outline-none focus:border-[#1E3A8A]"
+                className="w-full px-3 py-2 border border-stone-300 text-base sm:text-sm focus:outline-none focus:border-[#1E3A8A]"
               >
                 {Object.entries(PHASE_LABELS).map(([k, lbl]) => (
                   <option key={k} value={k}>
@@ -332,7 +426,7 @@ export function AnalyticsScorecardView({
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 border border-stone-300 text-sm focus:outline-none focus:border-[#1E3A8A]"
+                className="w-full px-3 py-2 border border-stone-300 text-base sm:text-sm focus:outline-none focus:border-[#1E3A8A]"
               />
             </div>
             <div>
@@ -343,12 +437,12 @@ export function AnalyticsScorecardView({
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-3 py-2 border border-stone-300 text-sm focus:outline-none focus:border-[#1E3A8A]"
+                className="w-full px-3 py-2 border border-stone-300 text-base sm:text-sm focus:outline-none focus:border-[#1E3A8A]"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
             {[
               ['Konten Tayang', publishedCount, setPublishedCount],
               ['Total Views', totalViews, setTotalViews],
@@ -366,7 +460,7 @@ export function AnalyticsScorecardView({
               ['Jam Kerja Anda', creatorHours, setCreatorHours],
             ].map(([label, val, setter]) => (
               <div key={label as string}>
-                <label className="block text-xs font-medium text-stone-600 mb-1">
+                <label className="block text-xs font-medium text-stone-600 mb-1 truncate">
                   {label as string}
                 </label>
                 <input
@@ -377,13 +471,13 @@ export function AnalyticsScorecardView({
                   onChange={(e) =>
                     (setter as (n: number) => void)(Number(e.target.value) || 0)
                   }
-                  className="w-full px-3 py-2 border border-stone-300 text-sm font-mono tabular-nums focus:outline-none focus:border-[#1E3A8A]"
+                  className="w-full px-3 py-2 border border-stone-300 text-base sm:text-sm font-mono tabular-nums focus:outline-none focus:border-[#1E3A8A]"
                 />
               </div>
             ))}
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 items-end">
+          <div className="flex flex-col sm:flex-row gap-4 sm:items-end">
             <div className="flex-1 w-full">
               <label className="block text-xs font-medium text-stone-600 mb-1">
                 Catatan Evaluasi &amp; Keputusan Minggu Depan
@@ -394,13 +488,13 @@ export function AnalyticsScorecardView({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Misal: Format bedah kemasan menang telak, jadikan serial Eps 02 hari Jumat."
-                className="w-full px-3 py-2 border border-stone-300 text-sm focus:outline-none focus:border-[#1E3A8A]"
+                className="w-full px-3 py-2.5 sm:py-2 border border-stone-300 text-base sm:text-sm focus:outline-none focus:border-[#1E3A8A]"
               />
             </div>
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-[#1E3A8A] hover:bg-[#172D6B] disabled:opacity-50 cursor-pointer whitespace-nowrap shrink-0"
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-semibold text-white bg-[#1E3A8A] hover:bg-[#172D6B] disabled:opacity-50 cursor-pointer whitespace-nowrap shrink-0 min-h-[44px] sm:min-h-0"
             >
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{saving ? 'Menyimpan...' : 'Simpan Log Scorecard'}</span>
@@ -410,78 +504,162 @@ export function AnalyticsScorecardView({
 
         {/* Saved Weekly Snapshots History */}
         {snapshots.length > 0 && (
-          <div className="overflow-x-auto bg-white border border-stone-200">
-            <table className="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-stone-200 bg-[#F4F0E8] text-xs uppercase tracking-wider text-stone-600">
-                  <th className="py-3 px-4 font-semibold">Minggu &amp; Fase</th>
-                  <th className="py-3 px-3 font-semibold text-right">Reach</th>
-                  <th className="py-3 px-3 font-semibold text-right">3s Hold</th>
-                  <th className="py-3 px-3 font-semibold text-right">Share/1K</th>
-                  <th className="py-3 px-3 font-semibold text-right">Follow Conv</th>
-                  <th className="py-3 px-3 font-semibold text-right">Leads</th>
-                  <th className="py-3 px-4 font-semibold">Catatan Keputusan</th>
-                  {canDeleteSnapshot && (
-                    <th className="py-3 px-3 font-semibold text-right">Aksi</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-200">
-                {snapshots.map((snap) => {
-                  const sShare =
-                    snap.totalReach > 0
-                      ? (snap.totalShares / snap.totalReach) * 1000
-                      : 0;
-                  const sConv =
-                    snap.profileVisits > 0
-                      ? (snap.newFollows / snap.profileVisits) * 100
-                      : 0;
-                  return (
-                    <tr key={snap.id} className="align-top">
-                      <td className="py-3 px-4">
-                        <div className="font-semibold text-stone-900">
+          <>
+            {/* Mobile Cards (< md) */}
+            <div className="md:hidden space-y-3">
+              {snapshots.map((snap) => {
+                const sShare =
+                  snap.totalReach > 0
+                    ? (snap.totalShares / snap.totalReach) * 1000
+                    : 0;
+                const sConv =
+                  snap.profileVisits > 0
+                    ? (snap.newFollows / snap.profileVisits) * 100
+                    : 0;
+                return (
+                  <div
+                    key={snap.id}
+                    className="p-4 bg-white border border-stone-200 space-y-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="text-sm font-semibold text-stone-900">
                           {snap.weekLabel}
                         </div>
                         <div className="text-xs text-stone-500">
                           {snap.phase.toUpperCase()} · {snap.publishedCount} konten
                         </div>
-                      </td>
-                      <td className="py-3 px-3 text-right font-mono tabular-nums">
-                        {snap.totalReach.toLocaleString('id-ID')}
-                      </td>
-                      <td className="py-3 px-3 text-right font-mono tabular-nums">
-                        {snap.avgHoldRate3s}%
-                      </td>
-                      <td className="py-3 px-3 text-right font-mono tabular-nums">
-                        {sShare.toFixed(1)}
-                      </td>
-                      <td className="py-3 px-3 text-right font-mono tabular-nums">
-                        {sConv.toFixed(1)}%
-                      </td>
-                      <td className="py-3 px-3 text-right font-mono tabular-nums font-semibold text-[#1E3A8A]">
-                        {snap.inboundLeads}
-                      </td>
-                      <td className="py-3 px-4 text-xs text-stone-600 max-w-xs">
-                        {snap.notes || '-'}
-                      </td>
+                      </div>
                       {canDeleteSnapshot && (
-                        <td className="py-3 px-3 text-right">
-                          <button
-                            type="button"
-                            onClick={() => void onDeleteSnapshot(snap.id)}
-                            aria-label={`Hapus ${snap.weekLabel}`}
-                            className="p-1.5 text-stone-400 hover:text-red-700 cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                          </button>
-                        </td>
+                        <button
+                          type="button"
+                          onClick={() => void onDeleteSnapshot(snap.id)}
+                          aria-label={`Hapus ${snap.weekLabel}`}
+                          className="p-2 text-stone-400 hover:text-red-700 cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" aria-hidden="true" />
+                        </button>
                       )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-2 pt-2 border-t border-stone-100 font-mono tabular-nums text-xs">
+                      <div>
+                        <span className="block text-[10px] text-stone-500 uppercase">
+                          Reach
+                        </span>
+                        <span className="font-semibold text-stone-900">
+                          {snap.totalReach.toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] text-stone-500 uppercase">
+                          3s Hold
+                        </span>
+                        <span className="font-semibold text-stone-900">
+                          {snap.avgHoldRate3s}%
+                        </span>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] text-stone-500 uppercase">
+                          Share/1K
+                        </span>
+                        <span className="font-semibold text-stone-900">
+                          {sShare.toFixed(1)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="block text-[10px] text-stone-500 uppercase">
+                          Leads
+                        </span>
+                        <span className="font-semibold text-[#1E3A8A]">
+                          {snap.inboundLeads}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-stone-600">
+                      Follow Conv: <strong className="font-mono">{sConv.toFixed(1)}%</strong>
+                      {snap.notes ? ` · ${snap.notes}` : ''}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Tablet & Desktop Table (md+) */}
+            <div className="hidden md:block overflow-x-auto bg-white border border-stone-200">
+              <table className="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-stone-200 bg-[#F4F0E8] text-xs uppercase tracking-wider text-stone-600">
+                    <th className="py-3 px-4 font-semibold">Minggu &amp; Fase</th>
+                    <th className="py-3 px-3 font-semibold text-right">Reach</th>
+                    <th className="py-3 px-3 font-semibold text-right">3s Hold</th>
+                    <th className="py-3 px-3 font-semibold text-right">Share/1K</th>
+                    <th className="py-3 px-3 font-semibold text-right">Follow Conv</th>
+                    <th className="py-3 px-3 font-semibold text-right">Leads</th>
+                    <th className="py-3 px-4 font-semibold">Catatan Keputusan</th>
+                    {canDeleteSnapshot && (
+                      <th className="py-3 px-3 font-semibold text-right">Aksi</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-200">
+                  {snapshots.map((snap) => {
+                    const sShare =
+                      snap.totalReach > 0
+                        ? (snap.totalShares / snap.totalReach) * 1000
+                        : 0;
+                    const sConv =
+                      snap.profileVisits > 0
+                        ? (snap.newFollows / snap.profileVisits) * 100
+                        : 0;
+                    return (
+                      <tr key={snap.id} className="align-top">
+                        <td className="py-3 px-4">
+                          <div className="font-semibold text-stone-900">
+                            {snap.weekLabel}
+                          </div>
+                          <div className="text-xs text-stone-500">
+                            {snap.phase.toUpperCase()} · {snap.publishedCount} konten
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono tabular-nums">
+                          {snap.totalReach.toLocaleString('id-ID')}
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono tabular-nums">
+                          {snap.avgHoldRate3s}%
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono tabular-nums">
+                          {sShare.toFixed(1)}
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono tabular-nums">
+                          {sConv.toFixed(1)}%
+                        </td>
+                        <td className="py-3 px-3 text-right font-mono tabular-nums font-semibold text-[#1E3A8A]">
+                          {snap.inboundLeads}
+                        </td>
+                        <td className="py-3 px-4 text-xs text-stone-600 max-w-xs">
+                          {snap.notes || '-'}
+                        </td>
+                        {canDeleteSnapshot && (
+                          <td className="py-3 px-3 text-right">
+                            <button
+                              type="button"
+                              onClick={() => void onDeleteSnapshot(snap.id)}
+                              aria-label={`Hapus ${snap.weekLabel}`}
+                              className="p-1.5 text-stone-400 hover:text-red-700 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </section>
     </div>

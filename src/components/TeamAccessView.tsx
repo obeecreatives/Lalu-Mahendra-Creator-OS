@@ -165,7 +165,7 @@ export function TeamAccessView({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="asisten.konten@gmail.com"
-                    className="w-full px-3 py-2 bg-[#FBF9F5] border border-stone-300 text-sm focus:outline-none focus:border-[#1E3A8A]"
+                    className="w-full px-3 py-2 bg-[#FBF9F5] border border-stone-300 text-base sm:text-sm focus:outline-none focus:border-[#1E3A8A]"
                   />
                 </div>
                 <div>
@@ -178,19 +178,19 @@ export function TeamAccessView({
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="Misal: Raka · Editor Reels"
-                    className="w-full px-3 py-2 bg-[#FBF9F5] border border-stone-300 text-sm focus:outline-none focus:border-[#1E3A8A]"
+                    className="w-full px-3 py-2 bg-[#FBF9F5] border border-stone-300 text-base sm:text-sm focus:outline-none focus:border-[#1E3A8A]"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-between gap-4 pt-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
                 <p className="text-xs text-stone-500">
                   Asisten harus memakai email Gmail / Google Workspace yang terverifikasi.
                 </p>
                 <button
                   type="submit"
                   disabled={submitting || !email.trim()}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#1E3A8A] hover:bg-[#172D6B] disabled:opacity-50 cursor-pointer whitespace-nowrap shrink-0"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 sm:py-2 text-xs font-semibold text-white bg-[#1E3A8A] hover:bg-[#172D6B] disabled:opacity-50 cursor-pointer whitespace-nowrap shrink-0 min-h-[44px] sm:min-h-0"
                 >
                   <UserPlus className="w-3.5 h-3.5" aria-hidden="true" />
                   <span>{submitting ? 'Memproses...' : 'Berikan Akses'}</span>

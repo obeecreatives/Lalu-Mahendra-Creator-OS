@@ -19,6 +19,8 @@ import { BatchingBoardView } from './components/BatchingBoardView';
 import { BlueprintDocsView } from './components/BlueprintDocsView';
 import { CommandCenterView } from './components/CommandCenterView';
 import { ContentStudioDrawer } from './components/ContentStudioDrawer';
+import { OfflineIndicator } from './components/OfflineIndicator';
+import { PWAInstallButton } from './components/PWAInstallButton';
 import { ResearchVaultView } from './components/ResearchVaultView';
 import { ShowcaseVaultView } from './components/ShowcaseVaultView';
 import { TeamAccessView } from './components/TeamAccessView';
@@ -320,30 +322,32 @@ export default function App() {
     if (showPublicBlueprint) {
       return (
         <div className="min-h-screen bg-[#FBF9F5] text-[#1C1917]">
-          <header className="no-print sticky top-0 z-30 bg-[#FBF9F5]/95 border-b border-stone-200">
-            <div className="max-w-[1200px] mx-auto px-6 py-4 flex items-center justify-between gap-8">
-              <span className="font-serif text-lg font-bold text-stone-900 whitespace-nowrap">
+          <OfflineIndicator />
+          <header className="no-print sticky top-0 z-30 bg-[#FBF9F5]/95 backdrop-blur-sm border-b border-stone-200">
+            <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3 sm:gap-8">
+              <span className="font-serif text-base sm:text-lg font-bold text-stone-900 whitespace-nowrap truncate">
                 Lalu Mahendra · Creator OS
               </span>
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                <PWAInstallButton variant="compact" />
                 <button
                   type="button"
                   onClick={() => setShowPublicBlueprint(false)}
-                  className="px-4 py-2 text-xs font-medium text-stone-700 bg-white border border-stone-300 hover:bg-stone-50 cursor-pointer whitespace-nowrap"
+                  className="px-3 sm:px-4 py-2 text-xs font-medium text-stone-700 bg-white border border-stone-300 hover:bg-stone-50 cursor-pointer whitespace-nowrap min-h-[40px]"
                 >
-                  Kembali ke Login
+                  Login
                 </button>
                 <button
                   type="button"
                   onClick={() => void handleGoogleSignIn()}
-                  className="px-4 py-2 text-xs font-semibold text-white bg-[#1E3A8A] hover:bg-[#172D6B] cursor-pointer whitespace-nowrap"
+                  className="hidden sm:inline-flex items-center px-4 py-2 text-xs font-semibold text-white bg-[#1E3A8A] hover:bg-[#172D6B] cursor-pointer whitespace-nowrap min-h-[40px]"
                 >
                   Masuk ke Workspace
                 </button>
               </div>
             </div>
           </header>
-          <main className="max-w-[1100px] mx-auto px-6 py-10">
+          <main className="max-w-[1100px] mx-auto px-4 sm:px-6 py-6 sm:py-10">
             <BlueprintDocsView />
           </main>
         </div>
@@ -352,23 +356,28 @@ export default function App() {
 
     return (
       <div className="min-h-screen bg-[#FBF9F5] text-[#1C1917] flex flex-col justify-between">
+        <OfflineIndicator />
         <header className="border-b border-stone-200 bg-white">
-          <div className="max-w-[1200px] mx-auto px-6 py-4 flex items-center justify-between gap-8">
-            <span className="font-serif text-lg font-bold tracking-tight text-stone-900 whitespace-nowrap">
+          <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between gap-3 sm:gap-8">
+            <span className="font-serif text-base sm:text-lg font-bold tracking-tight text-stone-900 whitespace-nowrap">
               Lalu Mahendra
             </span>
-            <button
-              type="button"
-              onClick={() => generateReportPdf()}
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-stone-800 bg-white border border-stone-300 hover:bg-stone-50 cursor-pointer whitespace-nowrap shrink-0"
-            >
-              <Download className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Unduh Laporan PDF</span>
-            </button>
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <PWAInstallButton variant="compact" />
+              <button
+                type="button"
+                onClick={() => generateReportPdf()}
+                className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs font-medium text-stone-800 bg-white border border-stone-300 hover:bg-stone-50 cursor-pointer whitespace-nowrap shrink-0 min-h-[40px]"
+              >
+                <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                <span className="hidden sm:inline">Unduh Laporan PDF</span>
+                <span className="sm:hidden">PDF</span>
+              </button>
+            </div>
           </div>
         </header>
 
-        <main className="max-w-[1040px] mx-auto px-6 py-16 grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-12 items-center">
+        <main className="max-w-[1040px] mx-auto px-4 sm:px-6 py-10 sm:py-16 grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-8 sm:gap-12 items-center">
           <div>
             <p className="text-xs uppercase tracking-widest text-[#1E3A8A] font-semibold mb-3">
               Creator OS · @lalumahendra × @obeecreatives × @obeephotography
@@ -450,6 +459,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#FBF9F5] text-[#1C1917] flex">
+      <OfflineIndicator />
       {/* Left Sidebar (Desktop 256px) */}
       <aside className="no-print hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-white border-r border-stone-200">
         <div className="px-6 py-5 border-b border-stone-200">
@@ -524,6 +534,8 @@ export default function App() {
               <p className="text-[11px] text-stone-400 mt-1">Fase dikunci oleh Owner</p>
             )}
           </div>
+
+          <PWAInstallButton variant="sidebar" />
 
           <div className="pt-3 border-t border-stone-100 flex items-center justify-between gap-2">
             <div className="min-w-0">
@@ -600,11 +612,49 @@ export default function App() {
               })}
             </nav>
 
-            <div className="p-4 border-t border-stone-200">
+            <div className="p-4 border-t border-stone-200 space-y-3 pb-safe">
+              {assignedWorkspaces.length > 0 && ownWorkspace && (
+                <div>
+                  <label className="block text-[11px] uppercase tracking-wider text-stone-500 mb-1">
+                    Workspace Aktif
+                  </label>
+                  <select
+                    value={selectedWorkspaceId || ownWorkspace.ownerId}
+                    onChange={(e) => setSelectedWorkspaceId(e.target.value)}
+                    className="w-full px-2.5 py-2 bg-[#FBF9F5] border border-stone-200 text-xs font-medium text-stone-800 focus:outline-none focus:border-[#1E3A8A]"
+                  >
+                    {assignedWorkspaces.map((ws) => (
+                      <option key={ws.ownerId} value={ws.ownerId}>
+                        Asisten: {ws.ownerName}
+                      </option>
+                    ))}
+                    <option value={ownWorkspace.ownerId}>Workspace Pribadi</option>
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-[11px] uppercase tracking-wider text-stone-500 mb-1">
+                  Fase Aktif 90 Hari
+                </label>
+                <select
+                  value={activePhase}
+                  disabled={userRole !== 'owner'}
+                  onChange={(e) => void handlePhaseChange(e.target.value as StrategyPhase)}
+                  className="w-full px-2.5 py-2 bg-[#FBF9F5] border border-stone-200 text-xs font-medium text-stone-800 disabled:opacity-65 focus:outline-none focus:border-[#1E3A8A]"
+                >
+                  <option value="phase-1">Fase 1 · Kalibrasi (Mg 1–4)</option>
+                  <option value="phase-2">Fase 2 · Serialisasi (Mg 5–8)</option>
+                  <option value="phase-3">Fase 3 · Flywheel (Mg 9–12+)</option>
+                </select>
+              </div>
+
+              <PWAInstallButton variant="sidebar" />
+
               <button
                 type="button"
                 onClick={() => void handleSignOut()}
-                className="w-full py-2 text-xs font-medium text-red-700 border border-red-200 hover:bg-red-50 cursor-pointer"
+                className="w-full py-2.5 text-xs font-medium text-red-700 border border-red-200 hover:bg-red-50 cursor-pointer min-h-[40px]"
               >
                 Keluar ({user.displayName || 'Akun'})
               </button>
@@ -615,15 +665,15 @@ export default function App() {
 
       {/* Main Content Area */}
       <div className="flex-1 lg:pl-64 flex flex-col min-w-0">
-        {/* Top Bar Contract: Breadcrumb on Left, 1 Primary CTA on Right */}
+        {/* Top Bar Contract: Breadcrumb on Left, Actions on Right */}
         <header className="no-print sticky top-0 z-20 bg-[#FBF9F5]/95 backdrop-blur-sm border-b border-stone-200">
-          <div className="px-6 py-3.5 flex items-center justify-between gap-8">
-            <div className="flex items-center gap-3 min-w-0">
+          <div className="px-4 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-6">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <button
                 type="button"
                 onClick={() => setMobileNavOpen(true)}
                 aria-label="Buka menu navigasi"
-                className="lg:hidden p-2 -ml-2 text-stone-700 hover:bg-stone-100 cursor-pointer"
+                className="lg:hidden p-2 -ml-2 text-stone-700 hover:bg-stone-100 cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center shrink-0"
               >
                 <Menu className="w-5 h-5" aria-hidden="true" />
               </button>
@@ -640,18 +690,22 @@ export default function App() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={openNewContentDrawer}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#1E3A8A] hover:bg-[#172D6B] transition-colors cursor-pointer whitespace-nowrap shrink-0"
-            >
-              <Plus className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>Tambah Konten Riset</span>
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <PWAInstallButton variant="compact" />
+              <button
+                type="button"
+                onClick={openNewContentDrawer}
+                className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-semibold text-white bg-[#1E3A8A] hover:bg-[#172D6B] transition-colors cursor-pointer whitespace-nowrap shrink-0 min-h-[40px]"
+              >
+                <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+                <span className="hidden sm:inline">Tambah Konten Riset</span>
+                <span className="sm:hidden">Tambah</span>
+              </button>
+            </div>
           </div>
         </header>
 
-        <main className="flex-1 px-6 py-8 max-w-[1240px] w-full mx-auto print-full">
+        <main className="flex-1 px-4 sm:px-6 py-5 sm:py-8 pb-24 md:pb-8 max-w-[1240px] w-full mx-auto print-full">
           {bootstrapError ? (
             <div className="p-6 bg-white border border-red-200 space-y-3 max-w-2xl">
               <p className="text-xs uppercase tracking-wider text-red-700 font-semibold">
@@ -777,6 +831,52 @@ export default function App() {
           )}
         </main>
       </div>
+
+      {/* Mobile Bottom Tab Bar (< md) */}
+      <nav
+        aria-label="Navigasi cepat mobile"
+        className="no-print md:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur-md border-t border-stone-200 pb-safe"
+      >
+        <div className="grid grid-cols-5 h-14">
+          {(
+            [
+              { id: 'command', label: 'Beranda', icon: LayoutDashboard },
+              { id: 'research', label: 'Riset', icon: Sparkles },
+              { id: 'batching', label: 'Batching', icon: Columns3 },
+              { id: 'analytics', label: 'Metrik', icon: BarChart3 },
+            ] as const
+          ).map((tab) => {
+            const Icon = tab.icon;
+            const active = activeView === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveView(tab.id)}
+                className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium cursor-pointer transition-colors ${
+                  active ? 'text-[#1E3A8A] font-semibold' : 'text-stone-500'
+                }`}
+              >
+                <Icon className="w-5 h-5" aria-hidden="true" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            className={`flex flex-col items-center justify-center gap-0.5 text-[10px] font-medium cursor-pointer transition-colors ${
+              activeView === 'showcase' || activeView === 'team' || activeView === 'blueprint'
+                ? 'text-[#1E3A8A] font-semibold'
+                : 'text-stone-500'
+            }`}
+          >
+            <Menu className="w-5 h-5" aria-hidden="true" />
+            <span>Lainnya</span>
+          </button>
+        </div>
+      </nav>
 
       {/* Studio Slide-Over Drawer */}
       <ContentStudioDrawer

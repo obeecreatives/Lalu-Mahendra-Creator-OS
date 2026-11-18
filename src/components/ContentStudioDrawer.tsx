@@ -222,15 +222,15 @@ export function ContentStudioDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-stone-900/40 backdrop-blur-[1px]">
-      <div className="w-full max-w-3xl bg-[#FBF9F5] h-full border-l border-stone-200 flex flex-col">
+      <div className="w-full sm:max-w-3xl bg-[#FBF9F5] h-full sm:border-l border-stone-200 flex flex-col">
         {/* Drawer Header */}
-        <div className="px-6 py-4 bg-white border-b border-stone-200 flex items-center justify-between gap-4">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-white border-b border-stone-200 flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs uppercase tracking-wider text-stone-500">
+            <p className="text-[11px] sm:text-xs uppercase tracking-wider text-stone-500 truncate">
               {item ? 'Studio Konten Kreator' : 'Buat Konten Riset Baru'}
               {item?.lastEditedBy ? ` · Terakhir diubah: ${item.lastEditedBy}` : ''}
             </p>
-            <h2 className="font-serif text-xl font-semibold text-stone-900 truncate">
+            <h2 className="font-serif text-lg sm:text-xl font-semibold text-stone-900 truncate">
               {form.title || 'Topik Konten Baru'}
             </h2>
           </div>
@@ -238,14 +238,14 @@ export function ContentStudioDrawer({
             type="button"
             onClick={onClose}
             aria-label="Tutup studio konten"
-            className="p-2 text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-colors cursor-pointer shrink-0"
+            className="p-2.5 text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Drawer Tab Selector */}
-        <div className="px-6 py-2.5 bg-white border-b border-stone-200 flex items-center gap-2 overflow-x-auto">
+        <div className="px-4 sm:px-6 py-2.5 bg-white border-b border-stone-200 flex items-center gap-2 overflow-x-auto">
           {(
             [
               { id: 'research', label: '1. Research Gate & Angle' },
@@ -257,7 +257,7 @@ export function ContentStudioDrawer({
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`px-3.5 py-1.5 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+              className={`px-3.5 py-2 sm:py-1.5 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === tab.id
                   ? 'bg-[#1E3A8A] text-white'
                   : 'bg-[#F4F0E8] text-stone-700 hover:text-stone-900'
@@ -269,7 +269,7 @@ export function ContentStudioDrawer({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSaveClick} className="flex-1 overflow-y-auto p-6 space-y-6">
+        <form onSubmit={handleSaveClick} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 pb-safe">
           {aiError && (
             <div className="p-3.5 bg-red-50 border border-red-200 text-xs text-red-800">
               {aiError}
@@ -289,7 +289,7 @@ export function ContentStudioDrawer({
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="Contoh: Kenapa Foto Produk Skincare Ini Gagal Menarik Pembeli"
-                  className="w-full px-3.5 py-2.5 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                  className="w-full px-3.5 py-2.5 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                 />
               </div>
 
@@ -301,7 +301,7 @@ export function ContentStudioDrawer({
                   <select
                     value={form.pillar}
                     onChange={(e) => setForm({ ...form, pillar: e.target.value as PillarId })}
-                    className="w-full px-3 py-2.5 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                    className="w-full px-3 py-2.5 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                   >
                     {Object.entries(PILLAR_META).map(([key, meta]) => (
                       <option key={key} value={key}>
@@ -318,7 +318,7 @@ export function ContentStudioDrawer({
                   <select
                     value={form.stage}
                     onChange={(e) => setForm({ ...form, stage: e.target.value as ContentStage })}
-                    className="w-full px-3 py-2.5 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                    className="w-full px-3 py-2.5 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                   >
                     {STAGE_META.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -339,7 +339,7 @@ export function ContentStudioDrawer({
                     onChange={(e) =>
                       setForm({ ...form, targetAccount: e.target.value as TargetAccount })
                     }
-                    className="w-full px-3 py-2.5 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                    className="w-full px-3 py-2.5 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                   >
                     <option value="@lalumahendra">@lalumahendra</option>
                     <option value="Collab @lalumahendra x @obeephotography">
@@ -362,7 +362,7 @@ export function ContentStudioDrawer({
                     onChange={(e) =>
                       setForm({ ...form, format: e.target.value as ContentFormat })
                     }
-                    className="w-full px-3 py-2.5 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                    className="w-full px-3 py-2.5 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                   >
                     <option value="Reels">Reels</option>
                     <option value="Collab Reels">Collab Reels</option>
@@ -383,7 +383,7 @@ export function ContentStudioDrawer({
                     onChange={(e) =>
                       setForm({ ...form, audienceTier: e.target.value as AudienceTier })
                     }
-                    className="w-full px-3 py-2.5 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                    className="w-full px-3 py-2.5 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                   >
                     {Object.entries(AUDIENCE_LABELS).map(([k, label]) => (
                       <option key={k} value={k}>
@@ -402,7 +402,7 @@ export function ContentStudioDrawer({
                     onChange={(e) =>
                       setForm({ ...form, viralTrigger: e.target.value as ViralTrigger })
                     }
-                    className="w-full px-3 py-2.5 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                    className="w-full px-3 py-2.5 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                   >
                     <option value="DM Shares">DM Shares (Kirim ke Teman/Tim)</option>
                     <option value="Watch Time">Watch Time &amp; Loop</option>
@@ -422,7 +422,7 @@ export function ContentStudioDrawer({
                   value={form.researchSource}
                   onChange={(e) => setForm({ ...form, researchSource: e.target.value })}
                   placeholder="Misal: Pertanyaan UMKM di MJC, Proyek Kemasan KTH, atau Showcase @obeephotography"
-                  className="w-full px-3.5 py-2.5 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                  className="w-full px-3.5 py-2.5 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                 />
               </div>
 
@@ -436,7 +436,7 @@ export function ContentStudioDrawer({
                   value={form.researchInsight}
                   onChange={(e) => setForm({ ...form, researchInsight: e.target.value })}
                   placeholder="Kenapa topik ini penting, kesalahan umum apa yang terjadi di lapangan, dan apa sudut pandang Creative Director Anda?"
-                  className="w-full px-3.5 py-2.5 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                  className="w-full px-3.5 py-2.5 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                 />
               </div>
 
@@ -486,7 +486,7 @@ export function ContentStudioDrawer({
                             Pakai Angle Ini
                           </button>
                         </div>
-                        <p className="text-sm font-semibold text-stone-900 mb-1">
+                        <p className="text-base sm:text-sm font-semibold text-stone-900 mb-1">
                           {opt.title}
                         </p>
                         <p className="text-xs text-stone-700 italic mb-1">
@@ -550,7 +550,7 @@ export function ContentStudioDrawer({
                   value={form.hook3s}
                   onChange={(e) => setForm({ ...form, hook3s: e.target.value })}
                   placeholder="Mulai langsung dari konflik, hasil final studio, atau klaim kontrarian..."
-                  className="w-full px-3.5 py-2.5 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                  className="w-full px-3.5 py-2.5 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                 />
               </div>
 
@@ -564,7 +564,7 @@ export function ContentStudioDrawer({
                   value={form.body30s}
                   onChange={(e) => setForm({ ...form, body30s: e.target.value })}
                   placeholder="Jabarkan 2–3 poin bukti visual nyata, perbandingan Before–After, atau demonstrasi di set..."
-                  className="w-full px-3.5 py-2.5 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                  className="w-full px-3.5 py-2.5 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                 />
               </div>
 
@@ -578,7 +578,7 @@ export function ContentStudioDrawer({
                   value={form.cta15s}
                   onChange={(e) => setForm({ ...form, cta15s: e.target.value })}
                   placeholder="Tutup dengan prinsip bisnis/kreatif dan ajak audiens berdiskusi atau menyimpan video..."
-                  className="w-full px-3.5 py-2.5 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                  className="w-full px-3.5 py-2.5 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                 />
               </div>
 
@@ -597,7 +597,7 @@ export function ContentStudioDrawer({
                     value={form.carouselOutline}
                     onChange={(e) => setForm({ ...form, carouselOutline: e.target.value })}
                     placeholder="Slide 1 (Cover) | Slide 2 (Masalah) | Slide 3 (Bukti) | Slide 4 (Framework) | Slide 5 (CTA)..."
-                    className="w-full px-3.5 py-2.5 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                    className="w-full px-3.5 py-2.5 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                   />
                 </div>
 
@@ -621,7 +621,7 @@ export function ContentStudioDrawer({
                     maxLength={2200}
                     value={form.seoCaption}
                     onChange={(e) => setForm({ ...form, seoCaption: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                    className="w-full px-3.5 py-2.5 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                   />
                 </div>
 
@@ -645,7 +645,7 @@ export function ContentStudioDrawer({
                       value={form.hashtags}
                       onChange={(e) => setForm({ ...form, hashtags: e.target.value })}
                       placeholder="#brandingumkm #fotoproduk #obeecreatives"
-                      className="w-full px-3.5 py-2 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                      className="w-full px-3.5 py-2 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                     />
                   </div>
 
@@ -657,7 +657,7 @@ export function ContentStudioDrawer({
                       type="date"
                       value={form.scheduledDate}
                       onChange={(e) => setForm({ ...form, scheduledDate: e.target.value })}
-                      className="w-full px-3.5 py-2 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                      className="w-full px-3.5 py-2 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                     />
                   </div>
                 </div>
@@ -673,7 +673,7 @@ export function ContentStudioDrawer({
                       value={form.driveAssetUrl}
                       onChange={(e) => setForm({ ...form, driveAssetUrl: e.target.value })}
                       placeholder="https://drive.google.com/..."
-                      className="w-full px-3.5 py-2 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                      className="w-full px-3.5 py-2 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                     />
                   </div>
 
@@ -687,7 +687,7 @@ export function ContentStudioDrawer({
                       value={form.publishedUrl}
                       onChange={(e) => setForm({ ...form, publishedUrl: e.target.value })}
                       placeholder="https://www.instagram.com/reel/..."
-                      className="w-full px-3.5 py-2 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                      className="w-full px-3.5 py-2 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                     />
                   </div>
                 </div>
@@ -702,7 +702,7 @@ export function ContentStudioDrawer({
                       onChange={(e) =>
                         setForm({ ...form, igPublishStatus: e.target.value as PublishStatus })
                       }
-                      className="w-full px-3 py-2 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                      className="w-full px-3 py-2 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                     >
                       <option value="manual">Manual / Native Collab</option>
                       <option value="queued">Antrean Siap Posting</option>
@@ -723,7 +723,7 @@ export function ContentStudioDrawer({
                           tiktokPublishStatus: e.target.value as PublishStatus,
                         })
                       }
-                      className="w-full px-3 py-2 bg-white border border-stone-300 text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                      className="w-full px-3 py-2 bg-white border border-stone-300 text-base sm:text-sm text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                     >
                       <option value="manual">Manual Upload</option>
                       <option value="draft">Draft Inbox (Sound Trending)</option>
@@ -782,7 +782,7 @@ export function ContentStudioDrawer({
                   </div>
                 </div>
 
-                <p className="text-sm text-stone-700 leading-relaxed">
+                <p className="text-base sm:text-sm text-stone-700 leading-relaxed">
                   {evalMetrics.recommendation}
                 </p>
 
@@ -831,7 +831,7 @@ export function ContentStudioDrawer({
                 </div>
 
                 {aiDiagnosis && (
-                  <div className="p-4 bg-[#F4F0E8] border border-stone-200 space-y-2 text-sm">
+                  <div className="p-4 bg-[#F4F0E8] border border-stone-200 space-y-2 text-base sm:text-sm">
                     <p className="font-semibold text-stone-900">
                       Vonis AI Coach: {aiDiagnosis.verdict}
                     </p>
@@ -879,7 +879,7 @@ export function ContentStudioDrawer({
                       onChange={(e) =>
                         setForm({ ...form, [field]: Number(e.target.value) || 0 })
                       }
-                      className="w-full px-3 py-2 bg-white border border-stone-300 text-sm font-mono tabular-nums text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
+                      className="w-full px-3 py-2 bg-white border border-stone-300 text-base sm:text-sm font-mono tabular-nums text-stone-900 focus:outline-none focus:border-[#1E3A8A]"
                     />
                   </div>
                 ))}
@@ -888,7 +888,7 @@ export function ContentStudioDrawer({
           )}
 
           {/* Drawer Footer */}
-          <div className="pt-4 border-t border-stone-200 flex items-center justify-between gap-4">
+          <div className="pt-4 pb-6 sm:pb-0 border-t border-stone-200 flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-4">
             <div>
               {item && onDelete && canDelete && (
                 confirmDelete ? (
@@ -898,14 +898,14 @@ export function ContentStudioDrawer({
                       onClick={() => {
                         void onDelete(item.id).then(onClose);
                       }}
-                      className="px-3 py-2 text-xs font-semibold text-white bg-red-700 hover:bg-red-800 cursor-pointer"
+                      className="px-3 py-2.5 sm:py-2 text-xs font-semibold text-white bg-red-700 hover:bg-red-800 cursor-pointer"
                     >
                       Konfirmasi Hapus
                     </button>
                     <button
                       type="button"
                       onClick={() => setConfirmDelete(false)}
-                      className="px-3 py-2 text-xs text-stone-600 hover:text-stone-900 cursor-pointer"
+                      className="px-3 py-2.5 sm:py-2 text-xs text-stone-600 hover:text-stone-900 cursor-pointer"
                     >
                       Batal
                     </button>
@@ -914,7 +914,7 @@ export function ContentStudioDrawer({
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-2.5 sm:py-2 text-xs font-medium text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>Hapus Konten</span>
@@ -923,18 +923,18 @@ export function ContentStudioDrawer({
               )}
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-medium text-stone-700 bg-white border border-stone-300 hover:bg-stone-50 cursor-pointer"
+                className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 text-xs font-medium text-stone-700 bg-white border border-stone-300 hover:bg-stone-50 cursor-pointer min-h-[44px] sm:min-h-0"
               >
                 Tutup
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="px-5 py-2 text-xs font-semibold text-white bg-[#1E3A8A] hover:bg-[#172D6B] disabled:opacity-50 transition-colors cursor-pointer"
+                className="flex-1 sm:flex-none px-5 py-2.5 sm:py-2 text-xs font-semibold text-white bg-[#1E3A8A] hover:bg-[#172D6B] disabled:opacity-50 transition-colors cursor-pointer min-h-[44px] sm:min-h-0"
               >
                 {saving ? 'Menyimpan...' : item ? 'Simpan Perubahan' : 'Simpan ke Pipeline'}
               </button>

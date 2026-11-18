@@ -1,4 +1,5 @@
 import { Calendar, ExternalLink, Plus } from 'lucide-react';
+import { useState } from 'react';
 import { WEEKLY_SCHEDULE } from '../data/reportData';
 import {
   PILLAR_META,
@@ -20,6 +21,68 @@ export function BatchingBoardView({
   onChangeStage,
   onCreateNew,
 }: BatchingBoardViewProps) {
+  const [activeMobileStage, setActiveMobileStage] = useState<ContentStage>('research');
+
+  const renderKanbanCard = (item: ContentItem) => (
+    <div key={item.id} className="bg-white border border-stone-200 p-3.5 space-y-2.5">
+      <div className="text-[11px] text-stone-500 flex items-center justify-between gap-1">
+        <span className="truncate">
+          {PILLAR_META[item.pillar].shortLabel} · {item.format}
+        </span>
+        {item.scheduledDate && (
+          <span className="font-mono tabular-nums text-[#1E3A8A] shrink-0">
+            {item.scheduledDate}
+          </span>
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={() =>
+          onOpenItem(item, item.stage === 'published' ? 'metrics' : 'script')
+        }
+        className="text-left w-full text-sm sm:text-xs font-semibold text-stone-900 hover:text-[#1E3A8A] leading-snug cursor-pointer"
+      >
+        {item.title}
+      </button>
+
+      <p className="text-[11px] text-stone-500 truncate">{item.targetAccount}</p>
+
+      <div className="flex items-center justify-between gap-2 pt-2 border-t border-stone-100">
+        <select
+          aria-label={`Ubah tahap ${item.title}`}
+          value={item.stage}
+          onChange={(e) =>
+            void onChangeStage(item.id, e.target.value as ContentStage)
+          }
+          className="w-full text-xs sm:text-[11px] px-2.5 py-2 sm:py-1 bg-[#FBF9F5] border border-stone-200 text-stone-700 focus:outline-none focus:border-[#1E3A8A] cursor-pointer min-h-[40px] sm:min-h-0"
+        >
+          {STAGE_META.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.label}
+            </option>
+          ))}
+        </select>
+
+        {item.driveAssetUrl && (
+          <a
+            href={item.driveAssetUrl}
+            target="_blank"
+            rel="noreferrer"
+            title="Buka Aset Drive"
+            className="p-2 sm:p-1 text-stone-500 hover:text-[#1E3A8A] shrink-0"
+          >
+            <ExternalLink className="w-4 h-4 sm:w-3.5 sm:h-3.5" aria-hidden="true" />
+          </a>
+        )}
+      </div>
+    </div>
+  );
+
+  const mobileStageMeta =
+    STAGE_META.find((s) => s.id === activeMobileStage) || STAGE_META[0];
+  const mobileStageItems = items.filter((i) => i.stage === activeMobileStage);
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-6 border-b border-stone-200">
@@ -34,122 +97,133 @@ export function BatchingBoardView({
         <button
           type="button"
           onClick={onCreateNew}
-          className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-[#1E3A8A] hover:bg-[#172D6B] transition-colors cursor-pointer whitespace-nowrap shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 text-xs font-semibold text-white bg-[#1E3A8A] hover:bg-[#172D6B] transition-colors cursor-pointer whitespace-nowrap shrink-0 self-start sm:self-auto"
         >
           <Plus className="w-3.5 h-3.5" aria-hidden="true" />
           <span>Tambah Konten Baru</span>
         </button>
       </div>
 
-      {/* Creator 6-Stage Kanban */}
-      <div className="overflow-x-auto pb-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4 min-w-[980px] items-start">
+      {/* Mobile Stage Switcher + Single-Column View (< md) */}
+      <div className="md:hidden space-y-4">
+        <div
+          className="flex items-center gap-1.5 overflow-x-auto pb-1"
+          role="tablist"
+          aria-label="Tahap produksi konten"
+        >
           {STAGE_META.map((stage) => {
-            const columnItems = items.filter((i) => i.stage === stage.id);
+            const count = items.filter((i) => i.stage === stage.id).length;
+            const active = stage.id === activeMobileStage;
             return (
-              <div
+              <button
                 key={stage.id}
-                className="bg-[#F4F0E8]/60 border border-stone-200 p-3 flex flex-col gap-3 min-h-[360px]"
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setActiveMobileStage(stage.id)}
+                className={`px-3 py-2 text-xs font-medium border whitespace-nowrap shrink-0 cursor-pointer min-h-[40px] flex items-center gap-1.5 ${
+                  active
+                    ? 'bg-[#1E3A8A] text-white border-[#1E3A8A]'
+                    : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'
+                }`}
               >
-                <div className="pb-2.5 border-b border-stone-200">
-                  <div className="flex items-center justify-between gap-2">
-                    <h2 className="text-xs font-semibold uppercase tracking-wider text-stone-900">
-                      {stage.label}
-                    </h2>
-                    <span className="font-mono tabular-nums text-xs font-semibold text-[#1E3A8A]">
-                      {columnItems.length}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-stone-500 mt-0.5">{stage.description}</p>
-                </div>
-
-                {columnItems.length === 0 ? (
-                  <p className="text-xs text-stone-400 italic py-6 text-center">
-                    Belum ada kartu
-                  </p>
-                ) : (
-                  <div className="space-y-2.5">
-                    {columnItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className="bg-white border border-stone-200 p-3 space-y-2.5"
-                      >
-                        <div className="text-[11px] text-stone-500 flex items-center justify-between gap-1">
-                          <span className="truncate">
-                            {PILLAR_META[item.pillar].shortLabel} · {item.format}
-                          </span>
-                          {item.scheduledDate && (
-                            <span className="font-mono tabular-nums text-[#1E3A8A] shrink-0">
-                              {item.scheduledDate}
-                            </span>
-                          )}
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onOpenItem(
-                              item,
-                              item.stage === 'published' ? 'metrics' : 'script'
-                            )
-                          }
-                          className="text-left w-full text-xs font-semibold text-stone-900 hover:text-[#1E3A8A] leading-snug cursor-pointer"
-                        >
-                          {item.title}
-                        </button>
-
-                        <p className="text-[11px] text-stone-500 truncate">
-                          {item.targetAccount}
-                        </p>
-
-                        <div className="flex items-center justify-between gap-2 pt-2 border-t border-stone-100">
-                          <select
-                            aria-label={`Ubah tahap ${item.title}`}
-                            value={item.stage}
-                            onChange={(e) =>
-                              void onChangeStage(item.id, e.target.value as ContentStage)
-                            }
-                            className="w-full text-[11px] px-2 py-1 bg-[#FBF9F5] border border-stone-200 text-stone-700 focus:outline-none focus:border-[#1E3A8A] cursor-pointer"
-                          >
-                            {STAGE_META.map((s) => (
-                              <option key={s.id} value={s.id}>
-                                {s.label}
-                              </option>
-                            ))}
-                          </select>
-
-                          {item.driveAssetUrl && (
-                            <a
-                              href={item.driveAssetUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              title="Buka Aset Drive"
-                              className="p-1 text-stone-500 hover:text-[#1E3A8A] shrink-0"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                <span>{stage.label}</span>
+                <span
+                  className={`font-mono tabular-nums text-[11px] ${
+                    active ? 'text-white/85' : 'text-[#1E3A8A]'
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
             );
           })}
         </div>
+
+        <div className="bg-[#F4F0E8]/60 border border-stone-200 p-4 space-y-3">
+          <div className="pb-2.5 border-b border-stone-200">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-stone-900">
+                {mobileStageMeta.label}
+              </h2>
+              <span className="font-mono tabular-nums text-xs font-semibold text-[#1E3A8A]">
+                {mobileStageItems.length} item
+              </span>
+            </div>
+            <p className="text-xs text-stone-500 mt-0.5">{mobileStageMeta.description}</p>
+          </div>
+
+          {mobileStageItems.length === 0 ? (
+            <p className="text-xs text-stone-400 italic py-8 text-center">
+              Belum ada kartu di tahap ini
+            </p>
+          ) : (
+            <div className="space-y-3">{mobileStageItems.map(renderKanbanCard)}</div>
+          )}
+        </div>
+      </div>
+
+      {/* Tablet & Desktop Responsive Kanban Grid (md+) */}
+      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 items-start">
+        {STAGE_META.map((stage) => {
+          const columnItems = items.filter((i) => i.stage === stage.id);
+          return (
+            <div
+              key={stage.id}
+              className="bg-[#F4F0E8]/60 border border-stone-200 p-3 flex flex-col gap-3 min-h-[320px] xl:min-h-[380px]"
+            >
+              <div className="pb-2.5 border-b border-stone-200">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-xs font-semibold uppercase tracking-wider text-stone-900">
+                    {stage.label}
+                  </h2>
+                  <span className="font-mono tabular-nums text-xs font-semibold text-[#1E3A8A]">
+                    {columnItems.length}
+                  </span>
+                </div>
+                <p className="text-[11px] text-stone-500 mt-0.5">{stage.description}</p>
+              </div>
+
+              {columnItems.length === 0 ? (
+                <p className="text-xs text-stone-400 italic py-6 text-center">
+                  Belum ada kartu
+                </p>
+              ) : (
+                <div className="space-y-2.5">{columnItems.map(renderKanbanCard)}</div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Weekly 3-Account Rhythm Reference */}
-      <div className="p-6 bg-white border border-stone-200">
+      <div className="p-4 sm:p-6 bg-white border border-stone-200">
         <div className="flex items-center gap-2 mb-4">
-          <Calendar className="w-4 h-4 text-[#1E3A8A]" aria-hidden="true" />
+          <Calendar className="w-4 h-4 text-[#1E3A8A] shrink-0" aria-hidden="true" />
           <h2 className="font-serif text-lg font-semibold text-stone-900">
             Ritme Jadwal Mingguan Sinergi 3 Akun
           </h2>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Mobile Cards (< md) */}
+        <div className="md:hidden divide-y divide-stone-200 border-t border-stone-200">
+          {WEEKLY_SCHEDULE.map((row) => (
+            <div key={row.day} className="py-3.5 space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-semibold text-stone-900">{row.day}</span>
+                <span className="font-mono text-xs text-[#1E3A8A]">{row.account}</span>
+              </div>
+              <p className="text-xs text-stone-800">
+                <span className="font-medium">{row.format}</span> ·{' '}
+                <span className="text-stone-500">{row.pillar}</span>
+              </p>
+              <p className="text-xs text-stone-600 leading-relaxed">{row.goal}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Tablet & Desktop Table (md+) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs sm:text-sm">
             <thead>
               <tr className="border-b border-stone-200 bg-[#F4F0E8] text-stone-700 text-xs uppercase tracking-wider">
