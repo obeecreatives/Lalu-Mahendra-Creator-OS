@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import { handleAiRequest, type AiRequestPayload } from '../server/aiHandler.ts';
+import { formatReadableAiError, handleAiRequest, type AiRequestPayload } from '../server/aiHandler.ts';
 
 interface VercelRequest extends IncomingMessage {
   method?: string;
@@ -26,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const result = await handleAiRequest(payload);
     res.status(200).json(result);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Terjadi kesalahan pada layanan AI.';
-    res.status(500).json({ error: message });
+    const formatted = formatReadableAiError(err);
+    res.status(formatted.statusCode).json({ error: formatted.message });
   }
 }

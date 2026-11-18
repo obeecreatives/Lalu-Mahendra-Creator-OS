@@ -22,17 +22,37 @@ export interface AiDiagnosisResult {
   followUpHook: string;
 }
 
+function cleanClientAiError(raw: string | undefined, status: number): string {
+  if (!raw) {
+    return status === 503
+      ? 'Server AI Gemini sedang padat sementara (503). Silakan coba klik ulang beberapa detik lagi.'
+      : 'Gagal memproses permintaan AI.';
+  }
+  if (raw.includes('503') || raw.includes('UNAVAILABLE') || raw.toLowerCase().includes('high demand')) {
+    return 'Server AI Gemini sedang padat sementara (503). Sistem sudah mencoba ulang otomatis—silakan coba lagi beberapa detik lagi.';
+  }
+  if (raw.includes('429') || raw.includes('RESOURCE_EXHAUSTED')) {
+    return 'Batas permintaan AI sementara tercapai (429). Tunggu 30–60 detik lalu coba lagi.';
+  }
+  return raw;
+}
+
 async function postAi<T>(body: Record<string, unknown>): Promise<T> {
   const res = await fetch('/api/ai', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
-  const data = (await res.json()) as T & { error?: string };
-  if (!res.ok) {
-    throw new Error(data.error || 'Gagal memproses permintaan AI.');
+  let data: (T & { error?: string }) | null = null;
+  try {
+    data = (await res.json()) as T & { error?: string };
+  } catch {
+    throw new Error(cleanClientAiError(undefined, res.status));
   }
-  return data;
+  if (!res.ok) {
+    throw new Error(cleanClientAiError(data?.error, res.status));
+  }
+  return data as T;
 }
 
 export async function requestAngleReframe(params: {

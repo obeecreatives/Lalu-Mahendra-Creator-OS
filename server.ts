@@ -4,7 +4,7 @@ import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
-import { handleAiRequest, type AiRequestPayload } from './server/aiHandler.ts';
+import { formatReadableAiError, handleAiRequest, type AiRequestPayload } from './server/aiHandler.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,9 +30,9 @@ async function startServer() {
       const result = await handleAiRequest(payload);
       res.json(result);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Terjadi kesalahan pada layanan AI.';
+      const formatted = formatReadableAiError(err);
       console.error('AI API Error:', err);
-      res.status(500).json({ error: message });
+      res.status(formatted.statusCode).json({ error: formatted.message });
     }
   });
 
@@ -40,7 +40,9 @@ async function startServer() {
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
-        hmr: process.env.DISABLE_HMR === 'true' ? false : { server: httpServer },
+        allowedHosts: true,
+        ws: { server: httpServer },
+        hmr: process.env.DISABLE_HMR === 'true' ? false : true,
       },
       appType: 'spa',
     });
