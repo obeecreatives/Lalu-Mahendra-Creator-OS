@@ -252,8 +252,11 @@ service cloud.firestore {
 
     match /workspaces/{workspaceId} {
       allow get: if isSignedIn() && isValidId(workspaceId) && (
-        existing().ownerId == request.auth.uid ||
-        normalizedEmail() in existing().assistantEmails
+        workspaceId == request.auth.uid ||
+        (resource != null && (
+          existing().ownerId == request.auth.uid ||
+          normalizedEmail() in existing().assistantEmails
+        ))
       );
       allow list: if isSignedIn() && (
         resource.data.ownerId == request.auth.uid ||
@@ -281,8 +284,8 @@ service cloud.firestore {
 
       match /members/{memberId} {
         allow get: if isSignedIn() && isValidId(workspaceId) && isValidId(memberId) && (
-          existing().ownerId == request.auth.uid ||
-          existing().email == normalizedEmail()
+          workspaceId == request.auth.uid ||
+          (resource != null && existing().email == normalizedEmail())
         );
         allow list: if isSignedIn() && (
           resource.data.ownerId == request.auth.uid ||
@@ -317,7 +320,7 @@ service cloud.firestore {
     }
 
     match /contentItems/{itemId} {
-      allow get: if isSignedIn() && isValidId(itemId) && (
+      allow get: if isSignedIn() && isValidId(itemId) && resource != null && (
         existing().ownerId == request.auth.uid ||
         (normalizedEmail() in existing().sharedEmails && isWorkspaceAssistant(existing().ownerId))
       );
@@ -393,7 +396,7 @@ service cloud.firestore {
     }
 
     match /weeklySnapshots/{snapshotId} {
-      allow get: if isSignedIn() && isValidId(snapshotId) && (
+      allow get: if isSignedIn() && isValidId(snapshotId) && resource != null && (
         existing().ownerId == request.auth.uid ||
         (normalizedEmail() in existing().sharedEmails && isWorkspaceAssistant(existing().ownerId))
       );
@@ -441,7 +444,7 @@ service cloud.firestore {
     }
 
     match /portfolioAssets/{assetId} {
-      allow get: if isSignedIn() && isValidId(assetId) && (
+      allow get: if isSignedIn() && isValidId(assetId) && resource != null && (
         existing().ownerId == request.auth.uid ||
         (normalizedEmail() in existing().sharedEmails && isWorkspaceAssistant(existing().ownerId))
       );

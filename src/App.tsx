@@ -96,6 +96,7 @@ export default function App() {
   const [snapshots, setSnapshots] = useState<WeeklySnapshot[]>([]);
   const [assets, setAssets] = useState<PortfolioAsset[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
@@ -125,22 +126,34 @@ export default function App() {
 
     let cancelled = false;
     setDataLoading(true);
+    setBootstrapError(null);
 
     void (async () => {
-      const assigned = await findAssignedWorkspacesForAssistant(user.email);
-      const { workspace } = await ensureOwnWorkspaceAndProfile(user, assigned.length === 0);
-      if (cancelled) return;
-      setOwnWorkspace(workspace);
-      setAssignedWorkspaces(assigned);
+      try {
+        const assigned = await findAssignedWorkspacesForAssistant(user.email);
+        const { workspace } = await ensureOwnWorkspaceAndProfile(user, assigned.length === 0);
+        if (cancelled) return;
+        setOwnWorkspace(workspace);
+        setAssignedWorkspaces(assigned);
 
-      if (assigned.length > 0) {
-        setSelectedWorkspaceId(assigned[0].ownerId);
-        setActiveWorkspace(assigned[0]);
-        setActivePhase(assigned[0].activePhase);
-      } else {
-        setSelectedWorkspaceId(workspace.ownerId);
-        setActiveWorkspace(workspace);
-        setActivePhase(workspace.activePhase);
+        if (assigned.length > 0) {
+          setSelectedWorkspaceId(assigned[0].ownerId);
+          setActiveWorkspace(assigned[0]);
+          setActivePhase(assigned[0].activePhase);
+        } else {
+          setSelectedWorkspaceId(workspace.ownerId);
+          setActiveWorkspace(workspace);
+          setActivePhase(workspace.activePhase);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setBootstrapError(
+            err instanceof Error
+              ? err.message
+              : 'Gagal memuat konfigurasi workspace Firestore.'
+          );
+          setDataLoading(false);
+        }
       }
     })();
 
@@ -639,7 +652,21 @@ export default function App() {
         </header>
 
         <main className="flex-1 px-6 py-8 max-w-[1240px] w-full mx-auto print-full">
-          {dataLoading ? (
+          {bootstrapError ? (
+            <div className="p-6 bg-white border border-red-200 space-y-3 max-w-2xl">
+              <p className="text-xs uppercase tracking-wider text-red-700 font-semibold">
+                Kendala Koneksi Workspace
+              </p>
+              <p className="text-sm text-stone-700 break-words">{bootstrapError}</p>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 text-xs font-semibold text-white bg-[#1E3A8A] hover:bg-[#172D6B] cursor-pointer"
+              >
+                Muat Ulang Halaman
+              </button>
+            </div>
+          ) : dataLoading ? (
             <div className="space-y-4">
               <div className="h-10 w-64 bg-stone-200 animate-pulse" />
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
