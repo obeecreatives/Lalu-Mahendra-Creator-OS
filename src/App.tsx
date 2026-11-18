@@ -13,7 +13,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnalyticsScorecardView } from './components/AnalyticsScorecardView';
 import { BatchingBoardView } from './components/BatchingBoardView';
 import { BlueprintDocsView } from './components/BlueprintDocsView';
@@ -33,6 +33,8 @@ import {
   deleteWeeklySnapshot,
   ensureOwnWorkspaceAndProfile,
   findAssignedWorkspacesForAssistant,
+  getMissingBlueprintBatch10,
+  importBlueprintBatch10,
   inviteAssistantToWorkspace,
   markPortfolioAssetRecycled,
   normalizeActorLabel,
@@ -103,6 +105,7 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
   const [drawerTab, setDrawerTab] = useState<'research' | 'script' | 'metrics'>('research');
+  const batchSyncAttemptedRef = useRef<string | null>(null);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (currentUser) => {
@@ -244,6 +247,50 @@ export default function App() {
   const workspaceOwnerId = selectedWorkspaceId || user?.uid || '';
   const sharedEmails = activeWorkspace?.assistantEmails || [];
   const actorLabel = user ? normalizeActorLabel(user) : 'Creator';
+  const missingBatchCount = getMissingBlueprintBatch10(items).length;
+
+  useEffect(() => {
+    if (
+      dataLoading ||
+      bootstrapError ||
+      !user ||
+      !workspaceOwnerId ||
+      userRole !== 'owner' ||
+      !activeWorkspace
+    ) {
+      return;
+    }
+
+    const syncKey = `lm_batch10_synced_v1_${workspaceOwnerId}`;
+    if (localStorage.getItem(syncKey) === '1') return;
+    if (batchSyncAttemptedRef.current === workspaceOwnerId) return;
+
+    batchSyncAttemptedRef.current = workspaceOwnerId;
+
+    if (missingBatchCount === 0) {
+      localStorage.setItem(syncKey, '1');
+      return;
+    }
+
+    void importBlueprintBatch10(workspaceOwnerId, sharedEmails, actorLabel, items)
+      .then(() => {
+        localStorage.setItem(syncKey, '1');
+      })
+      .catch(() => {
+        batchSyncAttemptedRef.current = null;
+      });
+  }, [
+    dataLoading,
+    bootstrapError,
+    user,
+    workspaceOwnerId,
+    userRole,
+    activeWorkspace,
+    missingBatchCount,
+    sharedEmails,
+    actorLabel,
+    items,
+  ]);
 
   const handleSaveContent = async (
     payload: Omit<ContentItem, 'id' | 'ownerId' | 'createdAt' | 'updatedAt'>,
@@ -748,6 +795,12 @@ export default function App() {
               {activeView === 'research' && (
                 <ResearchVaultView
                   items={items}
+                  missingBatchCount={missingBatchCount}
+                  onImportBlueprintBatch={async () => {
+                    if (!user || !workspaceOwnerId) return;
+                    await importBlueprintBatch10(workspaceOwnerId, sharedEmails, actorLabel, items);
+                    localStorage.setItem(`lm_batch10_synced_v1_${workspaceOwnerId}`, '1');
+                  }}
                   onOpenItem={openEditDrawer}
                   onQuickCreateFromAngle={handleQuickCreateAndOpen}
                   onCreateBlank={openNewContentDrawer}

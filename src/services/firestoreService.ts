@@ -15,6 +15,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { OperationType, db, handleFirestoreError } from '../firebase';
+import { BLUEPRINT_BATCH_10, type ContentItemSeed } from '../data/blueprintBatch10';
 import {
   clampNum,
   clampStr,
@@ -28,9 +29,7 @@ import {
   type WorkspaceRole,
 } from '../types/creator';
 
-const INITIAL_BLUEPRINT_ITEMS: Array<
-  Omit<ContentItem, 'id' | 'ownerId' | 'sharedEmails' | 'lastEditedBy' | 'createdAt' | 'updatedAt'>
-> = [
+const BASE_BLUEPRINT_ITEMS: ContentItemSeed[] = [
   {
     title: 'Bedah 3 Kesalahan Fatal Kemasan UMKM Sebelum Masuk Ritel',
     pillar: 'pilar-1',
@@ -235,6 +234,11 @@ const INITIAL_BLUEPRINT_ITEMS: Array<
     inboundLeads: 0,
     creatorMinutes: 20,
   },
+];
+
+const INITIAL_BLUEPRINT_ITEMS: ContentItemSeed[] = [
+  ...BASE_BLUEPRINT_ITEMS,
+  ...BLUEPRINT_BATCH_10,
 ];
 
 const INITIAL_PORTFOLIO_ASSETS: Array<
@@ -826,6 +830,44 @@ export async function createContentItem(
     return ref.id;
   } catch (error) {
     handleFirestoreError(error, OperationType.CREATE, path);
+  }
+}
+
+function normalizeTitleKey(title: string): string {
+  return clampStr(title, 160).toLowerCase().replace(/\s+/g, ' ');
+}
+
+export function getMissingBlueprintBatch10(existingItems: ContentItem[]): ContentItemSeed[] {
+  const existingTitles = new Set(existingItems.map((it) => normalizeTitleKey(it.title)));
+  return BLUEPRINT_BATCH_10.filter((seed) => !existingTitles.has(normalizeTitleKey(seed.title)));
+}
+
+export async function importBlueprintBatch10(
+  workspaceOwnerId: string,
+  sharedEmails: string[],
+  actorLabel: string,
+  existingItems: ContentItem[]
+): Promise<number> {
+  const missing = getMissingBlueprintBatch10(existingItems);
+  if (missing.length === 0) return 0;
+
+  const path = 'contentItems';
+  try {
+    for (let i = 0; i < missing.length; i += 400) {
+      const batch = writeBatch(db);
+      missing.slice(i, i + 400).forEach((seed) => {
+        const newRef = doc(collection(db, path));
+        batch.set(newRef, {
+          ...sanitizeContentPayload(workspaceOwnerId, sharedEmails, actorLabel, seed),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+      });
+      await batch.commit();
+    }
+    return missing.length;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
   }
 }
 
