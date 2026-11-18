@@ -1,4 +1,10 @@
-import { GoogleGenAI, Type, type GenerateContentParameters, type GenerateContentResponse } from '@google/genai';
+import {
+  GoogleGenAI,
+  ThinkingLevel,
+  Type,
+  type GenerateContentParameters,
+  type GenerateContentResponse,
+} from '@google/genai';
 
 export interface AiReframeInput {
   action: 'reframe';
@@ -70,16 +76,58 @@ Gaya komunikasi Lalu Mahendra:
 - Bahasa Indonesia lugas, tajam, berwibawa namun tetap membumi dan praktis.
 - Selalu patuhi aturan algoritma modern: 3 detik pertama bebas basa-basi ("Halo teman-teman" dilarang keras), struktur padat 20-45 detik, memicu DM Shares dan Saves, serta maksimal 5 tagar niche.`;
 
-const MODEL_SEQUENCE = ['gemini-4-hydrogen', 'gemini-3.1-flash-lite'] as const;
+interface ModelAttemptConfig {
+  model: string;
+  thinkingLevel: ThinkingLevel;
+  maxAttemptMs: number;
+}
+
+const ATTEMPT_PLAN: ModelAttemptConfig[] = [
+  {
+    model: 'gemini-4-hydrogen',
+    thinkingLevel: ThinkingLevel.LOW,
+    maxAttemptMs: 3900,
+  },
+  {
+    model: 'gemini-3.1-flash-lite',
+    thinkingLevel: ThinkingLevel.MINIMAL,
+    maxAttemptMs: 5000,
+  },
+];
+
+// Keep total serverless execution safely inside Vercel Hobby's 10s timeout
+const TOTAL_SERVER_BUDGET_MS = 9200;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`AI_TIMEOUT_${timeoutMs}ms`));
+    }, timeoutMs);
+
+    promise.then(
+      (val) => {
+        clearTimeout(timer);
+        resolve(val);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+}
+
 function parseUpstreamError(err: unknown): { code: number; status: string; message: string } {
   const rawMessage = err instanceof Error ? err.message : String(err || '');
   const numericStatus =
-    typeof err === 'object' && err !== null && 'status' in err && typeof (err as { status: unknown }).status === 'number'
+    typeof err === 'object' &&
+    err !== null &&
+    'status' in err &&
+    typeof (err as { status: unknown }).status === 'number'
       ? (err as { status: number }).status
       : 0;
 
@@ -95,11 +143,12 @@ function parseUpstreamError(err: unknown): { code: number; status: string; messa
       };
     }
   } catch {
-    // Raw message is plain text, inspect substrings below
+    // Raw message is plain text
   }
 
   let inferredCode = numericStatus || 500;
-  if (rawMessage.includes('503') || rawMessage.includes('UNAVAILABLE')) inferredCode = 503;
+  if (rawMessage.includes('AI_TIMEOUT')) inferredCode = 504;
+  else if (rawMessage.includes('503') || rawMessage.includes('UNAVAILABLE')) inferredCode = 503;
   else if (rawMessage.includes('429') || rawMessage.includes('RESOURCE_EXHAUSTED')) inferredCode = 429;
   else if (rawMessage.includes('403') || rawMessage.includes('PERMISSION_DENIED')) inferredCode = 403;
   else if (rawMessage.includes('400') || rawMessage.includes('API_KEY_INVALID')) inferredCode = 400;
@@ -120,6 +169,7 @@ function isTransientError(code: number, message: string): boolean {
     lower.includes('unavailable') ||
     lower.includes('temporarily') ||
     lower.includes('timeout') ||
+    lower.includes('ai_timeout') ||
     lower.includes('fetch failed') ||
     lower.includes('econnreset')
   );
@@ -132,11 +182,19 @@ export function formatReadableAiError(err: unknown): { statusCode: number; messa
 
   const parsed = parseUpstreamError(err);
 
+  if (parsed.code === 504 || parsed.message.includes('AI_TIMEOUT')) {
+    return {
+      statusCode: 504,
+      message:
+        'Respons server AI melebihi batas waktu karena trafik padat. Silakan klik tombol lagi untuk mencoba ulang.',
+    };
+  }
+
   if (parsed.code === 503 || parsed.status === 'UNAVAILABLE') {
     return {
       statusCode: 503,
       message:
-        'Server AI Gemini sedang padat sementara (503). Sistem sudah mencoba ulang otomatis—silakan klik tombol lagi beberapa detik lagi.',
+        'Server AI Gemini sedang padat sementara (503). Sistem sudah mencoba ulang otomatis—silakan klik ulang beberapa detik lagi.',
     };
   }
 
@@ -176,27 +234,31 @@ export function formatReadableAiError(err: unknown): { statusCode: number; messa
 
 async function generateWithRetryAndFallback(
   ai: GoogleGenAI,
-  buildParams: (model: string) => GenerateContentParameters
+  buildParams: (model: string, thinkingLevel: ThinkingLevel) => GenerateContentParameters
 ): Promise<GenerateContentResponse> {
+  const deadline = Date.now() + TOTAL_SERVER_BUDGET_MS;
   let lastError: unknown;
 
-  for (let mIdx = 0; mIdx < MODEL_SEQUENCE.length; mIdx++) {
-    const model = MODEL_SEQUENCE[mIdx];
-    const maxAttempts = mIdx === 0 ? 2 : 2;
-    const backoffMs = [700, 1400];
+  for (let i = 0; i < ATTEMPT_PLAN.length; i++) {
+    const remaining = deadline - Date.now();
+    if (remaining < 1200) break;
 
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      try {
-        return await ai.models.generateContent(buildParams(model));
-      } catch (err) {
-        lastError = err;
-        const parsed = parseUpstreamError(err);
-        if (!isTransientError(parsed.code, parsed.message)) {
-          throw err;
-        }
-        if (attempt < maxAttempts - 1) {
-          await sleep(backoffMs[attempt]);
-        }
+    const step = ATTEMPT_PLAN[i];
+    const timeoutMs = Math.min(step.maxAttemptMs, remaining);
+
+    try {
+      return await withTimeout(
+        ai.models.generateContent(buildParams(step.model, step.thinkingLevel)),
+        timeoutMs
+      );
+    } catch (err) {
+      lastError = err;
+      const parsed = parseUpstreamError(err);
+      if (!isTransientError(parsed.code, parsed.message)) {
+        throw err;
+      }
+      if (i < ATTEMPT_PLAN.length - 1 && deadline - Date.now() > 1500) {
+        await sleep(250);
       }
     }
   }
@@ -209,7 +271,7 @@ export async function handleAiRequest(payload: AiRequestPayload) {
   const ai = getAiClient();
 
   if (payload.action === 'reframe') {
-    const response = await generateWithRetryAndFallback(ai, (model) => ({
+    const response = await generateWithRetryAndFallback(ai, (model, thinkingLevel) => ({
       model,
       contents: `Ubah ide mentah berikut menjadi 3 opsi sudut pandang (angle) berotoritas tinggi level Creative Director & Educator:
 Topik Mentah: "${payload.rawTopic}"
@@ -217,6 +279,7 @@ Pilar Target: ${payload.pillar}
 Sumber Riset / Konteks: ${payload.researchSource || 'Observasi lapangan studio & mentoring'}`,
       config: {
         systemInstruction: CREATOR_PERSONA,
+        thinkingConfig: { thinkingLevel },
         responseMimeType: 'application/json',
         responseSchema: {
           type: Type.OBJECT,
@@ -253,7 +316,7 @@ Sumber Riset / Konteks: ${payload.researchSource || 'Observasi lapangan studio &
   }
 
   if (payload.action === 'script') {
-    const response = await generateWithRetryAndFallback(ai, (model) => ({
+    const response = await generateWithRetryAndFallback(ai, (model, thinkingLevel) => ({
       model,
       contents: `Susun skrip lengkap Formula 3-30-15 dan ekspansi 1-to-Many untuk konten berikut:
 Judul: ${payload.title}
@@ -266,6 +329,7 @@ Segmen Audiens: ${payload.audienceTier}
 Pemicu Utama: ${payload.viralTrigger}`,
       config: {
         systemInstruction: CREATOR_PERSONA,
+        thinkingConfig: { thinkingLevel },
         responseMimeType: 'application/json',
         responseSchema: {
           type: Type.OBJECT,
@@ -315,7 +379,7 @@ Pemicu Utama: ${payload.viralTrigger}`,
         ? ((payload.newFollows / payload.profileVisits) * 100).toFixed(1)
         : '0';
 
-    const response = await generateWithRetryAndFallback(ai, (model) => ({
+    const response = await generateWithRetryAndFallback(ai, (model, thinkingLevel) => ({
       model,
       contents: `Analisis performa konten Lalu Mahendra yang sudah tayang dan berikan diagnosa konkret serta ide Episode Lanjutan (Serial):
 Judul Konten: ${payload.title}
@@ -330,6 +394,7 @@ Saves: ${payload.saves} (${saveRate} per 1K reach)
 Profile Visits: ${payload.profileVisits} -> New Follows: ${payload.newFollows} (${followConv}%)`,
       config: {
         systemInstruction: CREATOR_PERSONA,
+        thinkingConfig: { thinkingLevel },
         responseMimeType: 'application/json',
         responseSchema: {
           type: Type.OBJECT,
